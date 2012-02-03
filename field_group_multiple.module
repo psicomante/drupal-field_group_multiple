@@ -12,70 +12,36 @@ function field_group_multiple_theme() {
   $path = drupal_get_path('module', 'field_group_multiple');
 
   return array(
-  // rename to table
-    'field_group_multiple_value_form' => array(
+    'field_group_multiple_table_form' => array(
       'render element' => 'elements',
-  ),
+    ),
+    'field_group_multiple_container_form' => array(
+      'render element' => 'elements',
+    ),
+    'field_group_multiple_label_value' => array(
+      'render element' => 'elements',
+    ),
     'field_group_multiple_container' =>array(
       	'variables' => array('group' => NULL,'items' => array()),
         'template' => 'field-group-multiple-container',
         'pattern' => 'field-group-multiple-container__',
         'path' => $path,
     ),
+    'field_group_multiple_label_value' =>array(
+      	'variables' => array('group' => NULL,'items' => array()),
+        'template' => 'field-group-multiple-label-value',
+        'pattern' => 'field-group-multiple-label-value__',
+        'path' => $path,
+    ),
+    'field_group_multiple_table' =>array(
+      	'variables' => array('group' => NULL,'items' => array()),
+        'template' => 'field-group-multiple-table',
+        'pattern' => 'field-group-multiple-table__',
+        'path' => $path,
+    ),
   );
 }
 
-function theme_field_group_multiple_value_form($variables) {
-  Logger::log("");
-  $element = $variables['elements'];
-
-  $orginal_fields = $element['#cache'];
-  $id = $element['#id'];
-
-  $field_matrix = $element['items'];
-  $header = array();
-  $rows = array();
-
-
-  Logger::log(element_children($field_matrix));
-  // TODO Prüfe, ob untrige Elemente multiple Felder sind
-
-  foreach(element_children($orginal_fields) as $field_name){
-
-    $container = $orginal_fields[$field_name];
-    $language = $container['#language'];
-    $field_data = $container[$language];
-
-    $field_title = $field_data['#title'];
-    $field_description = $field_data['#description'];
-
-    $header[] = t($field_title)."<br/><em>".t($field_description).'</em>';
-  }
-
-  foreach(element_children($field_matrix) as $delta){
-    $field_data = $field_matrix[$delta];
-    $row = array();
-    foreach(element_children($field_data) as $field_name){
-      $data = $field_data[$field_name];
-      $row[] = array("data" => drupal_render($data), "class" => "");
-    }
-    $rows[] = array("data"=>$row,"class" => array("row-delta-".$delta));
-  }
-
-
-  $wrapper_id = drupal_html_id($id . '-add-more-wrapper');
-  $table_id = drupal_html_id($id . '_values');
-
-  $output = "";
-
-  $output = '<div class="form-item">';
-  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-group-multiple-table'))));
-  //$output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
-  $output .= '</div>';
-
-  return $output;
-
-}
 
 function field_group_multiple_field_group_formatter_info() {
   return array(
@@ -83,42 +49,43 @@ function field_group_multiple_field_group_formatter_info() {
   	  'field_group_multiple_table' => array(
   	    'label' => t('Multi field group table'),
   	    'description' => t('This fieldgroup renders the inner content with a theme.'),
-  ),
+      ),
   	  'field_group_multiple_label_value' => array(
   	    'label' => t('Multi field group label-value field'),
   	    'description' => t('This fieldgroup renders the inner content with a theme.'),
-  ),
+      ),
   	  'field_group_multiple_container' => array(
   	    'label' => t('Multi field group container'),
   	    'description' => t('This fieldgroup renders the inner content with a theme.'),
-  ),
-  ),
+      ),
+    ),
   	'form' => array(
   	  'field_group_multiple_table' => array(
   	    'label' => t('Multiple field group table'),
   	    'description' => t('This fieldgroup renders the inner content with a theme.'),
-  ),
+      ),
+  	  'field_group_multiple_container' => array(
+  	    'label' => t('Multi field group container'),
+  	    'description' => t('This fieldgroup renders the inner content with a theme.'),
+      ),
   	  'field_group_multiple_label_value' => array(
   	    'label' => t('Multiple field group label-value'),
   	    'description' => t('This fieldgroup renders the inner content with a theme.'),
-  ),
-  ),
+      ),
+    ),
   );
 }
 
 function field_group_multiple_field_group_format_settings($group){
   Logger::log("");
 }
+
 function field_group_multiple_field_group_format_summary($group){
   Logger::log("");
 }
 
 /**
  * Implements hook_field_group_pre_render().
- * This function (only) gives you the oppertunity to 'create' the given
- * wrapper field.
- * @param Array $elements by address.
- * @param Object $group The Field group info.
  */
 function field_group_multiple_field_group_pre_render(&$element, $group, &$form) {
   $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
@@ -141,22 +108,26 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         break;
       case 'field_group_multiple_label_value':
         break;
+
+      case 'field_group_multiple_container':
+        break;
     }
 
   }else{
     // some display mode
 
     switch($group_type){
-    case 'field_group_multiple_table':
-            Logger::log("");
-            Logger::log($group_type);
-    break;
-    case 'field_group_multiple_container':
-      Logger::log("");
+      case 'field_group_multiple_table':
+        Logger::log("");
+        Logger::log($group_type);
+        break;
 
-      $array_transposed = array();
+      case 'field_group_multiple_container':
+        Logger::log("");
 
-      foreach($group->children as $field_name){
+        $array_transposed = array();
+
+        foreach($group->children as $field_name){
           $field =  $element[$field_name];
           //$field_type = $field['#field_type'];
           //$instance = $field['#object'];
@@ -177,59 +148,42 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
               $array_transposed[$delta][$field_name] = null;
             }
           }
-      }
+        }
 
-      $element = array(
-      	'#id' => $id,
-      	'#type' => 'fieldset',
-        '#title' => check_plain(t($group->label)),
-        '#weight' => $group->weight,
-        '#collapsible' => false,
-        '#collapsed' => false,
-        '#pre_render' => array(),
-        //'#attributes' => array('class' => explode(' ', $classes)),
-        //'#description' => $description,
-      );
+        $element = array(
+          '#id' => $id,
+      	  '#type' => 'fieldset',
+          '#title' => check_plain(t($group->label)),
+          '#weight' => $group->weight,
+          '#collapsible' => false,
+          '#collapsed' => false,
+          '#pre_render' => array(),
+          //'#attributes' => array('class' => explode(' ', $classes)),
+          //'#description' => $description,
+        );
 
-      $element['#attached']['js'][] = 'misc/form.js';
-      $element['#attached']['js'][] = 'misc/collapse.js';
+        $element['#attached']['js'][] = 'misc/form.js';
+        $element['#attached']['js'][] = 'misc/collapse.js';
 
-      $element['items'] = array(
-        '#theme' => 'field_group_multiple_container',
-        '#items' => $array_transposed,
-        '#group' => $group,
-      );
+        $element['items'] = array(
+          '#theme' => 'field_group_multiple_container',
+          '#items' => $array_transposed,
+          '#group' => $group,
+        );
 
 
-      //theme('field_group_multiple_container', array("rows"));
-      break;
+        //theme('field_group_multiple_container', array("rows"));
+        break;
 
-    case 'field_group_multiple_label_value':
-    break;
+      case 'field_group_multiple_label_value':
+
+        break;
     }
 
   }
 
 }
 
-function template_preprocess_field_group_multiple_container(&$variables){
-  Logger::log("");
-  Logger::log($variables);
-  drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
-
-  // TODO theme suggestions
-}
-
-function template_preprocess_field_group_multiple_label_value(&$vars){
-  // TODO theme
-  // TODO theme suggestions
-}
-
-
-function template_preprocess_field_group_multiple_table(&$vars){
-  // TODO theme
-  // TODO theme suggestions
-}
 
 
 
@@ -285,7 +239,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       );
 
       $form[$id]['fields'] = array(
-      	'#theme' => 'field_group_multiple_value_form',
+      	'#theme' => 'field_group_multiple_table_form',
       	'#group_name' => $group->group_name,
       	'#id' => $id,
       	'#wrapper_id' => $wrapper_id,
@@ -305,7 +259,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
           'callback' => 'field_group_multiple_add_more_js',
           'wrapper' => $wrapper_id,
           'effect' => 'fade',
-      ),
+        ),
       );
 
       $form_state['field_group_multiple'][$id]['parents'] = $form['#parents'];
@@ -313,7 +267,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       foreach($group->children as $field_name){
         $form[$id]['fields']['#cache'][$field_name] = $form[$field_name];
 
-        // Disable Fields with pre_render
+        // Disable fields with pre_render
         $lang = $form[$field_name]['#language'];
         $form[$field_name][$lang]['#field_group_multiple'] = $id;
 
@@ -378,39 +332,6 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 }
 
 
-// function field_group_multiple_field_attach_presave($entity_type, $entity) {
-
-//   if(isset($entity->{"_field_group_multiple"})){
-//     foreach($entity->{"_field_group_multiple"} as $group_name => $fields){
-//       foreach($fields as $field_name => $values){
-//         // write values in correct order
-//         $entity->{$field_name} = $values;
-//       }
-//     }
-//     Logger::log($entity);
-//   }
-// }
-
-// function field_group_multiple_field_attach_insert($entity_type, $entity) {
-//   field_group_multiple_field_attach_save($entity_type, $entity);
-// }
-
-// function field_group_multiple_field_attach_update($entity_type, $entity) {
-//   field_group_multiple_field_attach_save($entity_type, $entity);
-// }
-
-// function field_group_multiple_field_attach_save($entity_type, $entity) {
-//   if(isset($entity->{"_field_group_multiple"})){
-//     foreach($entity->{"_field_group_multiple"} as $group_name => $fields){
-//       foreach($fields as $field_name => $values){
-//         // write values in correct order
-//         $entity->{$field_name} = $values;
-//       }
-//     }
-
-//   }
-// }
-
 function field_group_multiple_field_form_prepare_validate(&$element, &$form_state){
 
   $field_name = $element['#field_name'];
@@ -418,9 +339,7 @@ function field_group_multiple_field_form_prepare_validate(&$element, &$form_stat
   $field_key = $element['#value_key'];
   Logger::log($field_name);
 
-  $field_parents = $element['#field_parents'];
-  $field_parents[] = $field_name;
-  $field_parents[] = $field_lang;
+  $field_parents = array_merge($element['#field_parents'],array($field_name,$field_lang));
 
   $field_group_multiple_id = $element['#field_group_multiple'];
 
@@ -480,9 +399,6 @@ function field_group_multiple_field_form_validate($element, &$form_state) {
 function _field_group_multiple_after_build_calculate_items($id, $entity_type, $entity, &$form, &$form_state){
   Logger::log("");
 
-  //   if(isset($form_state['field_group_multiple'][$id]['build'])) return;
-  //   $form_state['field_group_multiple'][$id]['build'] = true;
-
   $group_parents = $form_state['field_group_multiple'][$id]['parents'];
   $field_names = element_children($form[$id]['fields']['#cache']);
 
@@ -493,14 +409,12 @@ function _field_group_multiple_after_build_calculate_items($id, $entity_type, $e
 
   $field_values = _field_group_multiple_get_field_values($entity, $fields);
 
-
   $items_count = 0;
   if(isset($form_state['field_group_multiple'][$id]['count'])){
     $items_count = $form_state['field_group_multiple'][$id]['count'];
   }else{
     $form_state['field_group_multiple'][$id]['count'] = $items_count = count($field_values);
   }
-
 
   foreach($fields as $field_name => $field){
     $language = $field['#language'];
@@ -556,9 +470,6 @@ function _field_group_multiple_after_build_calculate_items($id, $entity_type, $e
 
 
 
-function field_group_multiple_field_group_build_pre_render_alter(& $element){
-  Logger::log("");
-}
 
 
 function _field_group_multiple_get_field_values($entity, $fields){
@@ -605,6 +516,90 @@ function _field_group_multiple_get_field_values($entity, $fields){
 
   return $values;
 }
+
+function theme_field_group_multiple_container_form($variables) {
+  // TODO
+}
+
+function theme_field_group_multiple_label_value_form($variables) {
+  // TODO
+}
+
+function theme_field_group_multiple_table_form($variables) {
+  Logger::log("");
+  $element = $variables['elements'];
+
+  $orginal_fields = $element['#cache'];
+  $id = $element['#id'];
+
+  $field_matrix = $element['items'];
+  $header = array();
+  $rows = array();
+
+
+  Logger::log(element_children($field_matrix));
+  // TODO Prüfe, ob untrige Elemente multiple Felder sind
+
+  foreach(element_children($orginal_fields) as $field_name){
+
+    $container = $orginal_fields[$field_name];
+    $language = $container['#language'];
+    $field_data = $container[$language];
+
+    $field_title = $field_data['#title'];
+    $field_description = $field_data['#description'];
+
+    $header[] = t($field_title)."<br/><em>".t($field_description).'</em>';
+  }
+
+  foreach(element_children($field_matrix) as $delta){
+    $field_data = $field_matrix[$delta];
+    $row = array();
+    foreach(element_children($field_data) as $field_name){
+      $data = $field_data[$field_name];
+      $row[] = array("data" => drupal_render($data), "class" => "");
+    }
+    $rows[] = array("data"=>$row,"class" => array("row-delta-".$delta));
+  }
+
+
+  $wrapper_id = drupal_html_id($id . '-add-more-wrapper');
+  $table_id = drupal_html_id($id . '_values');
+
+  $output = "";
+
+  $output = '<div class="form-item">';
+  $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-group-multiple-table'))));
+  //$output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
+  $output .= '</div>';
+
+  return $output;
+
+}
+
+
+function template_preprocess_field_group_multiple_container(&$variables){
+  Logger::log("");
+  Logger::log($variables);
+  drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
+
+  // TODO theme suggestions
+}
+
+function template_preprocess_field_group_multiple_label_value(&$vars){
+  // TODO theme
+  // TODO theme suggestions
+}
+
+
+function template_preprocess_field_group_multiple_table(&$vars){
+  // TODO theme
+  // TODO theme suggestions
+}
+
+// function field_group_multiple_field_group_build_pre_render_alter(& $element){
+//   Logger::log("");
+// }
 
 // function field_group_multiple_ctools_plugin_api($module, $api){
 //   Logger::log("");

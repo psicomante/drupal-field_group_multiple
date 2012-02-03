@@ -3,5 +3,7 @@ description = Extra Widget / Display / Formatter for Field group
 package = myDesk
 core = 7.x
 
+files[] = field_group_multiple.field_ui.inc
+
 dependencies[] = field_group
 
