@@ -1,0 +1,7 @@
+name = Field group multiple
+description = Extra Widget / Display / Formatter for Field group 
+package = myDesk
+core = 7.x
+
+dependencies[] = field_group
+

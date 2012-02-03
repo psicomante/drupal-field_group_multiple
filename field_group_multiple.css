@@ -1,0 +1,9 @@
+@CHARSET "UTF-8";
+
+.field-group-multiple-horizontal-items .field-group-multiple-item .field-item {
+	display: inline;
+}
+
+.field-group-multiple-vertical-items .field-group-multiple-item .field-item {
+	display: block;
+}
