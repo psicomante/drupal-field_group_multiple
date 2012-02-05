@@ -24,7 +24,7 @@ function field_group_multiple_theme() {
       'render element' => 'elements',
     ),
     'field_group_multiple_container' =>array(
-      	'variables' => array('group' => NULL,'items' => array()),
+      	'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
         'template' => 'field-group-multiple-container',
         'pattern' => 'field-group-multiple-container__',
         'path' => $path,
@@ -36,7 +36,7 @@ function field_group_multiple_theme() {
         'path' => $path,
     ),
     'field_group_multiple_table' =>array(
-      	'variables' => array('group' => NULL,'items' => array()),
+      	'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
         'template' => 'field-group-multiple-table',
         'pattern' => 'field-group-multiple-table__',
         'path' => $path,
@@ -142,7 +142,7 @@ function _is_field_group_multiple($type){
 }
 
 function _is_field_widget($widget){
-  return isset($widget['#entity_type']) && isset($widget['#bundle']) && isset($widget['#field_name']) && isset($widget['#language']);
+  return isset($widget['#entity_type']) && isset($widget['#bundle']) && isset($widget['#field_name']) && isset($widget['#language']) && isset($widget['#type']);
 }
 
 
@@ -186,18 +186,17 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
 
     switch($group_type){
       case 'field_group_multiple_table':
-        Logger::log("");
-        Logger::log($group_type);
-        break;
-
       case 'field_group_multiple_container':
         Logger::log("");
+
+        $elements = array();
 
         $array_transposed = array();
         foreach($group->children as $field_name){
           $field =  $element[$field_name];
           //$field_type = $field['#field_type'];
           //$instance = $field['#object'];
+          $elements[$field_name] = $field;
 
           $info = field_info_field($field_name);
           $function = $info['module'] . '_field_is_empty';
@@ -205,12 +204,19 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
           $map = array();
           $count = 0;
 
+          $child_count = count(element_children($field));
+          $is_delta = $child_count == count($field['#items']);
           foreach($field['#items'] as $delta => $value){
             $_res = $function($value,$info);
             if(!$_res){
-              $field_value = $field[$count];
+              // correct items mapping
+              if($is_delta){
+                $field_value = $field[$delta];
+              }else{
+                $field_value = $field[$count];
+                $count++;
+              }
               $array_transposed[$delta][$field_name] = $field_value;
-              $count++;
             }else{
               $array_transposed[$delta][$field_name] = null;
             }
@@ -233,11 +239,11 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         $element['#attached']['js'][] = 'misc/collapse.js';
 
         $element['items'] = array(
-          '#theme' => 'field_group_multiple_container',
+          '#theme' => $group_type,
           '#items' => $array_transposed,
           '#group' => $group,
+          '#elements' => $elements,
         );
-
 
         //theme('field_group_multiple_container', array("rows"));
         break;
@@ -281,15 +287,13 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   $bundle = $form['#bundle'];
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
   if(!empty($groups)){
-    // Logger::log($form);
-
 
     foreach($groups as $group_name => $group){
-      if(!preg_match("/^field_group_multiple/",$group->format_type)) continue;
-      Logger::log($group_name);
+      if(!_is_field_group_multiple($group->format_type)) continue;
 
-      if(!preg_match("/^field_group_multiple_table/",$group->format_type)) continue;
+      //if(!preg_match("/^field_group_multiple_table/",$group->format_type)) continue;
 
+      //Logger::log($entity);
       $id = $group->entity_type . '_' . $group->bundle . '_form_' . $group->group_name;
       if(empty($form['#field_group_multiple'])) $form['#field_group_multiple'] = array();
 
@@ -304,7 +308,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       );
 
       $form[$id]['fields'] = array(
-      	'#theme' => 'field_group_multiple_table_form',
+      	'#theme' => $group->format_type . '_form',
       	'#group_name' => $group->group_name,
       	'#id' => $id,
       	'#wrapper_id' => $wrapper_id,
@@ -333,34 +337,21 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       foreach($group->children as $field_name){
 
         $langcode = $form[$field_name]['#language'];
-
         $field_state = field_form_get_state(array(), $field_name, $langcode, $form_state);
-//         $field    = field_widget_field($form[$field_name], $form_state);
-//         $instance = field_widget_instance($form[$field_name], $form_state);
         $field = $field_state['field'];
         $instance = $field_state['instance'];
         //Logger::log($field_state);
         $items = field_get_default_value($entity_type, $entity, $field, $instance, $langcode);
         $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, 0, $form, $form_state);
 
-        //Logger::log($widget);
-
         $form[$id]['fields']['#orginal'][$field_name] = $form[$field_name];
         $form[$id]['fields']['#widget'][$field_name] = $widget;
-        //$form[$id]['fields']['#cache'][$field_name] = $form[$field_name];
-        // Disable fields with pre_render
-//         $lang = $form[$field_name]['#language'];
-//         $form[$field_name][$lang]['#field_group_multiple'] = $id;
-
         unset($form[$field_name]);
-       //_field_group_multiple_populate_validate_callbacks($id, $form[$field_name]);
-
-//         if(!isset($form[$field_name][$lang]['#element_validate'])) $form[$field_name][$lang]['#element_validate'] = array();
-//         $form[$field_name][$lang]['#element_validate'] = array_merge(array("field_group_multiple_field_form_prepare_validate"), $form[$field_name][$lang]['#element_validate']);
       }
 
+      Logger::log($form[$id]['fields']['#widget']);
       _field_group_multiple_after_build_calculate_items($id, $entity_type, $entity, $form, $form_state);
-      Logger::log($form);
+     // Logger::log($form);
     }
   }
 }
@@ -435,7 +426,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 
       $parents = array($id, "fields" , "items");
       $form_values = drupal_array_get_nested_value($form_state['values'], $parents);
-      Logger::log($form_values);
+      //Logger::log($form_values);
       $items_count = count($form_values);
 
       $langcode = $form_state['values']['language'];
@@ -469,7 +460,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
         }
       }
 
-      Logger::log($values);
+    //  Logger::log($values);
       for($i=0; $i < $items_count ; $i++){
         $is_empty = true;
 
@@ -479,7 +470,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
             break;
           }
         }
-        Logger::log($i . ' => ' . $is_empty);
+      //  Logger::log($i . ' => ' . $is_empty);
         if(!$is_empty){
 
           foreach($values as $field_name => $field_values){
@@ -510,9 +501,9 @@ function field_group_multiple_field_form_prepare_validate(&$element, &$form_stat
   // field_
 
   Logger::log($field_name);
-  Logger::log($element);
+  //Logger::log($element);
 
-  Logger::log($form_state['values']);
+  //Logger::log($form_state['values']);
   //$field_parents = array_merge($element['#field_parents'],array($field_name,$field_lang));
 
   $field_group_multiple_id = $element['#field_group_multiple'];
@@ -533,14 +524,6 @@ function field_group_multiple_field_form_prepare_validate(&$element, &$form_stat
         //$new_values[$i] = "_none";
         if(isset($values['items'][$i][$field_name])){
           // TODO gilt das nur bei listen???
-
-//           if(is_array($values['items'][$i][$field_name])){
-//             foreach($columns as $column_name){
-//               $values['items'][$i][$field_name]
-//             }
-
-
-//           }else{
             if($values['items'][$i][$field_name] == '_none'){
               $new_values[$i] = 0;
             }else{
@@ -552,7 +535,7 @@ function field_group_multiple_field_form_prepare_validate(&$element, &$form_stat
     }
   }
 
-  Logger::log($new_values);
+//  Logger::log($new_values);
   $element['#value'] = $new_values;
 }
 
@@ -615,7 +598,6 @@ function _field_group_multiple_after_build_calculate_items($id, $entity_type, $e
     }
   }
 
-
   $group_parents = array($id, 'fields', 'items');
   $items = array();
   for($delta=0; $delta < $items_count; $delta++){
@@ -645,13 +627,7 @@ function _field_group_multiple_populate_widget_delta($widget, $delta, $group_par
 
     unset($new_widget['#title'], $new_widget['#description'],
     $new_widget['#value'], $new_widget['#default_value']);
-    Logger::log($field_name . ' => ' . print_r($values,true));
     $new_widget['#multiple'] = 0;
-    // TODO with columns
-
-//     $info = field_info_field($field_name);
-//     $function = $info['module'] . '_field_is_empty';
-
 
     $new_widget['#default_value'] = null;
     if(isset($new_widget['#value_key']) && isset($values[$new_widget['#value_key']])){
@@ -661,8 +637,6 @@ function _field_group_multiple_populate_widget_delta($widget, $delta, $group_par
     }else{
       //$new_widget['#default_value'] = $values;
     }
-
-    // $cell['#parents'] = array_merge($cell['#parents'], array($delta, $field_name));
   }else{
     foreach(element_children($widget) as $widget_child){
       $new_widget[$widget_child] = _field_group_multiple_populate_widget_delta($widget[$widget_child], $delta, $group_parents, $values, $widget_child);
@@ -702,9 +676,12 @@ function _field_group_multiple_get_field_values($entity, $fields){
     //$field_data = $field[$language];
 
     if(isset($entity->{$field_name}[$language])){
-      if($max_items < count($entity->{$field_name}[$language])){
-        $max_items = count($entity->{$field_name}[$language]);
+      $count = count($entity->{$field_name}[$language]);
+      Logger::log($count);
+      if($max_items < $count){
+        $max_items = $count;
       }
+      Logger::log($max_items);
     }
   }
 
@@ -719,31 +696,34 @@ function _field_group_multiple_get_field_values($entity, $fields){
   }
 
   // remove empty rows
-  $corrected_values = array();
-  foreach($values as $i => $data){
-    $is_empty = false;
-    foreach($data as $field_name => $field_value){
-      if(is_null($field_value)){
-        $is_empty = true;
-      }else{
-        $is_empty = false;
-      }
-    }
-    if(!$is_empty){
-      $corrected_values[] = $data;
-    }
-  }
-  return $corrected_values;
+//   $corrected_values = array();
+//   foreach($values as $i => $data){
+//     $is_empty = false;
+//     foreach($data as $field_name => $field_value){
+//       if(is_null($field_value)){
+//         $is_empty = true;
+//       }else{
+//         $is_empty = false;
+//       }
+//     }
+//     if(!$is_empty){
+//       $corrected_values[] = $data;
+//     }
+//   }
+  return $values;
 }
 
 
 function theme_field_group_multiple_container_form($variables) {
   // TODO
+  Logger::log("");
+  theme_field_group_multiple_table_form($variables);
 }
 
 
 function theme_field_group_multiple_label_value_form($variables) {
   // TODO
+  Logger::log("");
 }
 
 
@@ -806,15 +786,50 @@ function template_preprocess_field_group_multiple_container(&$variables){
   // TODO theme suggestions
 }
 
-function template_preprocess_field_group_multiple_label_value(&$vars){
+function template_preprocess_field_group_multiple_label_value(&$variables){
   // TODO theme
   // TODO theme suggestions
 }
 
 
-function template_preprocess_field_group_multiple_table(&$vars){
+function template_preprocess_field_group_multiple_table(&$variables){
   // TODO theme
   // TODO theme suggestions
+  Logger::log("");
+  Logger::log($variables);
+  drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
+
+  $group = $variables['group'];
+  $elements = $variables['elements'];
+  $items = $variables['items'];
+
+  $header = array();
+  $rows = array();
+
+  // TODO Prüfe, ob untrige Elemente multiple Felder sind
+  $id = $group->group_name;
+
+  foreach(element_children($elements) as $field_name){
+    $field = $elements[$field_name];
+    $field_title = $field['#title'];
+//    $field_description = $field['#description'];
+    $header[] = t($field_title);
+  }
+
+  foreach(element_children($items) as $delta){
+    $row_values = $items[$delta];
+
+    $row = array();
+    foreach(element_children($row_values) as $field_name){
+      $data = $row_values[$field_name];
+      Logger::log($delta . ' => ' . print_r($data,true));
+      $row[] = array("data" => drupal_render($data), "class" => "");
+    }
+    $rows[] = array("data"=>$row,"class" => array("row-delta-".$delta));
+  }
+
+  $table_id = drupal_html_id($id . '_values');
+  $variables['table'] = theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-group-multiple-table'))));
 }
 
 // function field_group_multiple_field_group_build_pre_render_alter(& $element){
