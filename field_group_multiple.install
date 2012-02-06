@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Implements hook_install().
+ */
 function field_group_multiple_install() {
   // set module weight higher then this of field_group
   // we want that our module starts after field_group functions
