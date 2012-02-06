@@ -30,7 +30,7 @@ function field_group_multiple_theme() {
         'path' => $path,
     ),
     'field_group_multiple_label_value' =>array(
-      	'variables' => array('group' => NULL,'items' => array()),
+      	'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
         'template' => 'field-group-multiple-label-value',
         'pattern' => 'field-group-multiple-label-value__',
         'path' => $path,
@@ -331,21 +331,26 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
         ),
       );
 
-      $form_state['field_group_multiple'][$id]['parents'] = $form['#parents'];
-      Logger::log("");
+      if(!isset($form['#parents'])) {
+        $form_state['field_group_multiple'][$id]['parents'] = array();
+      } else {
+        $form_state['field_group_multiple'][$id]['parents'] = $form['#parents'];
+      }
+
+      Logger::log($form_state['field_group_multiple']);
 
       foreach($group->children as $field_name){
-
         $langcode = $form[$field_name]['#language'];
-        $field_state = field_form_get_state(array(), $field_name, $langcode, $form_state);
+        $field_state = field_form_get_state($form_state['field_group_multiple'][$id]['parents'], $field_name, $langcode, $form_state);
         $field = $field_state['field'];
         $instance = $field_state['instance'];
-        //Logger::log($field_state);
+        Logger::log($field_state);
         $items = field_get_default_value($entity_type, $entity, $field, $instance, $langcode);
         $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, 0, $form, $form_state);
 
         $form[$id]['fields']['#orginal'][$field_name] = $form[$field_name];
         $form[$id]['fields']['#widget'][$field_name] = $widget;
+
         unset($form[$field_name]);
       }
 
@@ -356,22 +361,22 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   }
 }
 
-/**
- * Add additional validation function to secure the write back of submited values
- */
-function _field_group_multiple_populate_validate_callbacks($group_id, &$field_form){
-   if(_is_field_widget($field_form)){
-     // is field widget
-     //$lang = $field_form['#language'];
-     $field_form['#field_group_multiple'] = $group_id;
-     if(!isset($field_form['#element_validate'])) $field_form['#element_validate'] = array();
-     $field_form['#element_validate'] = array_merge(array("field_group_multiple_field_form_prepare_validate"), $field_form['#element_validate']);
-   }else{
-     foreach(element_children($field_form) as $child_name){
-       _field_group_multiple_populate_validate_callbacks($group_id, $field_form[$child_name]);
-     }
-   }
-}
+// /**
+//  * Add additional validation function to secure the write back of submited values
+//  */
+// function _field_group_multiple_populate_validate_callbacks($group_id, &$field_form){
+//    if(_is_field_widget($field_form)){
+//      // is field widget
+//      //$lang = $field_form['#language'];
+//      $field_form['#field_group_multiple'] = $group_id;
+//      if(!isset($field_form['#element_validate'])) $field_form['#element_validate'] = array();
+//      $field_form['#element_validate'] = array_merge(array("field_group_multiple_field_form_prepare_validate"), $field_form['#element_validate']);
+//    }else{
+//      foreach(element_children($field_form) as $child_name){
+//        _field_group_multiple_populate_validate_callbacks($group_id, $field_form[$child_name]);
+//      }
+//    }
+// }
 
 
 function _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state){
@@ -424,18 +429,26 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 
     foreach($form['#field_group_multiple'] as $group_name => $id){
 
+      //$form_state['field_group_multiple'][$id]['parents']
       $parents = array($id, "fields" , "items");
+
+
+      Logger::log($form_state['values']);
+
       $form_values = drupal_array_get_nested_value($form_state['values'], $parents);
+
+      Logger::log($form_values);
       //Logger::log($form_values);
       $items_count = count($form_values);
 
-      $langcode = $form_state['values']['language'];
+
       //$functions = array();
 
       $values = array();
       foreach($form[$id]['fields']['#orginal'] as $field_name => $field_data){
         $entity->{$field_name} = array();
 
+        $langcode = $field_data['#language'];
         // mark empty fields
         $info = field_info_field($field_name);
         $columns = array_keys($info['columns']);
@@ -460,7 +473,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
         }
       }
 
-    //  Logger::log($values);
+      Logger::log($values);
       for($i=0; $i < $items_count ; $i++){
         $is_empty = true;
 
@@ -485,80 +498,10 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 }
 
 
-function field_group_multiple_field_form_prepare_validate(&$element, &$form_state){
-
-  $field_name = $element['#field_name'];
-  $field_lang = $element['#language'];
-//  $field_key  = $element['#value_key'];
-  $columns  = $element['#columns'];
-
-//   $field = field_widget_field($element, $form_state);
-//   $columns = array_keys($field['columns']);
-//   Logger::log($field);
-
-//   //$instance = field_widget_instance($element, $form_state);
-//   Logger::log($instance);
-  // field_
-
-  Logger::log($field_name);
-  //Logger::log($element);
-
-  //Logger::log($form_state['values']);
-  //$field_parents = array_merge($element['#field_parents'],array($field_name,$field_lang));
-
-  $field_group_multiple_id = $element['#field_group_multiple'];
-
-  $group_parents = $form_state['field_group_multiple'][$field_group_multiple_id]['parents'];
-  $group_parents[] = $field_group_multiple_id;
-  $group_parents[] = "fields";
-
-  $values = drupal_array_get_nested_value($form_state['values'], $group_parents);
-
-  $new_values = array();
-
-  if(!empty($values) && isset($values['items'])){
-    $item_count = count($values['items']);
-
-    if($item_count > 0){
-      for($i=0;$i<$item_count; $i++){
-        //$new_values[$i] = "_none";
-        if(isset($values['items'][$i][$field_name])){
-          // TODO gilt das nur bei listen???
-            if($values['items'][$i][$field_name] == '_none'){
-              $new_values[$i] = 0;
-            }else{
-              $new_values[$i] = $values['items'][$i][$field_name];
-            }
-//           }
-        }
-      }
-    }
-  }
-
-//  Logger::log($new_values);
-  $element['#value'] = $new_values;
-}
 
 
 function field_group_multiple_field_form_validate($element, &$form_state) {
-  // TODO in profile
-  // module_load_include("inc", "user", "user.pages");
-//   Logger::log($form_state['complete form']['#validate']);
-//   foreach($form_state['complete form']['#validate'] as $i => $function){
-//     if(!function_exists($function)){
-//       Logger::log($form_state['complete form']['#validate'][$i]);
-//       unset($form_state['complete form']['#validate'][$i]);
-//     }
-//   }
-//   Logger::log($form_state['complete form']['#submit']);
-//   foreach($form_state['complete form']['#submit'] as $i => $function){
-//     if(!function_exists($function)){
-//       Logger::log($form_state['complete form']['#submit'][$i]);
-//       unset($form_state['complete form']['#submit'][$i]);
-//     }
-// }
-  //Logger::log($form_state);
-  //form_set_error("abc","abc");
+
 }
 
 
@@ -852,6 +795,60 @@ function template_preprocess_field_group_multiple_table(&$variables){
 //   Logger::log("");
 // }
 
+
+// function field_group_multiple_field_form_prepare_validate(&$element, &$form_state){
+
+//   $field_name = $element['#field_name'];
+//   $field_lang = $element['#language'];
+// //  $field_key  = $element['#value_key'];
+//   $columns  = $element['#columns'];
+
+// //   $field = field_widget_field($element, $form_state);
+// //   $columns = array_keys($field['columns']);
+// //   Logger::log($field);
+
+// //   //$instance = field_widget_instance($element, $form_state);
+// //   Logger::log($instance);
+//   // field_
+
+//   Logger::log($field_name);
+//   //Logger::log($element);
+
+//   //Logger::log($form_state['values']);
+//   //$field_parents = array_merge($element['#field_parents'],array($field_name,$field_lang));
+
+//   $field_group_multiple_id = $element['#field_group_multiple'];
+
+//   $group_parents = $form_state['field_group_multiple'][$field_group_multiple_id]['parents'];
+//   $group_parents[] = $field_group_multiple_id;
+//   $group_parents[] = "fields";
+
+//   $values = drupal_array_get_nested_value($form_state['values'], $group_parents);
+
+//   $new_values = array();
+
+//   if(!empty($values) && isset($values['items'])){
+//     $item_count = count($values['items']);
+
+//     if($item_count > 0){
+//       for($i=0;$i<$item_count; $i++){
+//         //$new_values[$i] = "_none";
+//         if(isset($values['items'][$i][$field_name])){
+//           // TODO gilt das nur bei listen???
+//             if($values['items'][$i][$field_name] == '_none'){
+//               $new_values[$i] = 0;
+//             }else{
+//               $new_values[$i] = $values['items'][$i][$field_name];
+//             }
+// //           }
+//         }
+//       }
+//     }
+//   }
+
+// //  Logger::log($new_values);
+//   $element['#value'] = $new_values;
+// }
 
 
 // function field_group_multiple_theme(){
