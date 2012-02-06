@@ -662,7 +662,7 @@ function _field_group_multiple_get_field_values($entity, $fields){
 function theme_field_group_multiple_container_form($variables) {
   // TODO
   Logger::log("");
-  theme_field_group_multiple_table_form($variables);
+  return theme_field_group_multiple_table_form($variables);
 }
 
 
