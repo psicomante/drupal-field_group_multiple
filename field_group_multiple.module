@@ -9,7 +9,9 @@
 
 define("FIELD_GROUP_MULTIPLE", "field_group_multiple");
 
-
+/**
+ * Implements hook_theme().
+ */
 function field_group_multiple_theme() {
   $path = drupal_get_path('module', FIELD_GROUP_MULTIPLE);
 
@@ -676,15 +678,13 @@ function theme_field_group_multiple_table_form($variables) {
 
   $orginal_fields = $element['#orginal'];
   $id = $element['#id'];
+  $items = $element['items'];
 
-  $field_matrix = $element['items'];
   $header = array();
   $rows = array();
 
-  Logger::log(element_children($field_matrix));
-  // TODO Prüfe, ob untrige Elemente multiple Felder sind
 
-  foreach(element_children($orginal_fields) as $field_name){
+  foreach(element_children($items) as $field_name){
 
     $container = $orginal_fields[$field_name];
     $language = $container['#language'];
@@ -696,8 +696,8 @@ function theme_field_group_multiple_table_form($variables) {
     $header[] = t($field_title)."<br/><em>".t($field_description).'</em>';
   }
 
-  foreach(element_children($field_matrix) as $delta){
-    $field_data = $field_matrix[$delta];
+  foreach(element_children($items) as $delta){
+    $field_data = $items[$delta];
     $row = array();
     foreach(element_children($field_data) as $field_name){
       $data = $field_data[$field_name];
