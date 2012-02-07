@@ -6,9 +6,7 @@
  *  - delta + field_name + value render_array or null if empty
  */
 ?>
-<div class="field clearfix field-label-inline">
-
-<div class="field-label"><?= $group->label ?></div>
+<div class="field-group-multiple-label-value clearfix">
 
 <div class="field-items field-group-multiple-items field-group-multiple-horizontal-items">
 <?php foreach($items as $delta => $item): ?>
