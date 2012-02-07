@@ -180,21 +180,17 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
     }
 
-    Logger::log($group->format_type);
     $element = array();
     if(isset($group->format_settings['instance_settings']['parent_format_type'])){
       $format_type = $group->format_settings['instance_settings']['parent_format_type'];
       if(!empty($format_type)){
         $parent_group = clone $group;
         $parent_group->format_type = $format_type;
-        Logger::log($parent_group);
         field_group_field_group_pre_render($element, $parent_group, $form);
       }
     }
 
     $element['#weight'] = $group->weight;
-    Logger::log($element);
-
     $element['items'] = array(
          '#theme' => $group->format_type,
          '#items' => $array_transposed,
@@ -564,6 +560,25 @@ function template_preprocess_field_group_multiple_container(&$variables){
   $elements = $variables['elements'];
   $items = $variables['items'];
 
+  // unset other children
+  foreach(element_children($elements) as $field_name){
+    unset($elements[$field_name]['#items']);
+    foreach(element_children($elements[$field_name]) as $nr){
+      unset($elements[$field_name][$nr]);
+    }
+  }
+
+  $entries = array();
+  foreach(element_children($items) as $delta){
+    $entry = array();
+    foreach(element_children($items[$delta]) as $field_name){
+      $entry[$field_name] = $elements[$field_name];
+      $entry[$field_name]['#items'][0] = $entry[$field_name][0] = $items[$delta][$field_name];
+    }
+    $entries[$delta] = $entry;
+  }
+  $variables['entries'] = $entries;
+  Logger::log($variables['entries']);
 }
 
 function template_preprocess_field_group_multiple_label_value(&$variables){
@@ -574,31 +589,26 @@ function template_preprocess_field_group_multiple_label_value(&$variables){
   $elements = $variables['elements'];
   $items = $variables['items'];
 
+  $label_field = $group->format_settings['instance_settings']['label_value_field'];
+  $value_field = array_shift(array_diff($group->children, array($label_field)));
 
-  //   $labels = $element[array_shift($fields)];
-  //   $values = $element[array_shift($fields)];
+  $tmp_entry = $elements[$value_field];
+  unset($tmp_entry['#items']);
+  // unset other children
+  foreach(element_children($tmp_entry) as $nr){
+    unset($tmp_entry[$nr]);
+  }
 
-  //   $defaults = array();
-  //   $defaults['#theme'] = "field";
-  //   $defaults['#access'] = TRUE;
-  //   $defaults['#label_display'] = $values['#label_display'];
-  //   $defaults['#field_name'] = $values['#field_name'];
-  //   $defaults['#bundle'] = $values['#bundle'];
-  //   $defaults['#field_type'] = $values['#field_type'];
+  $entries = array();
+  foreach(element_children($items) as $delta){
+    $values = $items[$delta];
+    $entry = $tmp_entry;
+    $entry['#title'] = $values[$label_field]['#markup'];
+    $entry['#items'][0] = $entry[0] = $values[$value_field];
 
-  //   $size = count($values['#items']);
-  //   $items = array();
-
-  //   for($i=0; $i < $size; $i++) {
-  //     $tmp = $defaults;
-  //     $tmp['#title'] = ucfirst($labels[$i]["#markup"]);
-  //     $tmp['#items'][0] = $values['#items'][$i];
-  //     $tmp[0]['#markup'] = $values[$i]['#markup'];
-
-  //     $items[] = drupal_render($tmp);
-  //   }
-
-
+    $entries[$delta] = $entry;
+  }
+  $variables['entries'] = $entries;
 }
 
 
@@ -623,7 +633,6 @@ function template_preprocess_field_group_multiple_table(&$variables){
 
   foreach(element_children($items) as $delta){
     $row_values = $items[$delta];
-
     $row = array();
     foreach(element_children($row_values) as $field_name){
       $data = $row_values[$field_name];
@@ -646,8 +655,6 @@ function template_preprocess_field_group_multiple_table(&$variables){
  * @param unknown_type $form_state
  */
 function _field_group_multiple_after_build_calculate_items($id, $entity_type, $entity, &$form, &$form_state){
-  Logger::log("");
-
   $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
   $field_names = element_children($group_element['fields']['#widget']);
