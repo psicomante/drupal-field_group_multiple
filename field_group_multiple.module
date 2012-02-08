@@ -575,6 +575,15 @@ function template_preprocess_field_group_multiple_container(&$variables){
     $entries[$delta] = $entry;
   }
   $variables['entries'] = $entries;
+
+  if(empty($variables['theme_hook_suggestions'])) $variables['theme_hook_suggestions'] = array();
+
+  $suggestions_prefix = "field_group_multiple_container";
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle."__".$group->group_name;
 }
 
 function template_preprocess_field_group_multiple_label_value(&$variables){
@@ -601,10 +610,17 @@ function template_preprocess_field_group_multiple_label_value(&$variables){
     $entry = $tmp_entry;
     $entry['#title'] = $values[$label_field]['#markup'];
     $entry['#items'][0] = $entry[0] = $values[$value_field];
-
     $entries[$delta] = $entry;
   }
   $variables['entries'] = $entries;
+
+  $suggestions_prefix = "field_group_multiple_label_value";
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle."__".$group->group_name;
+
 }
 
 
@@ -639,6 +655,14 @@ function template_preprocess_field_group_multiple_table(&$variables){
 
   $table_id = drupal_html_id($id . '_values');
   $variables['table'] = theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-group-multiple-table'))));
+
+  $suggestions_prefix = "field_group_multiple_table";
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->group_name;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle;
+  $variables['theme_hook_suggestions'][] = $suggestions_prefix . "__".$group->entity_type."__".$group->bundle."__".$group->group_name;
+
 }
 
 /**

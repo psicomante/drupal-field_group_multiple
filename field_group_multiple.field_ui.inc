@@ -85,13 +85,17 @@ function _field_group_multiple_default_format_settings($group){
   $formatter_options = _field_group_multiple_allowed_parent_formatter($group->mode);
   $form['instance_settings']['parent_format_type'] = array(
           '#title' => t("Parent format type"),
-    		'#type' => 'select',
+    	  '#type' => 'select',
           '#options' => $formatter_options,
           '#default_value' => $default_parent_type,
           '#attributes' => array('class' => array('field-group-parent-type')),
   );
 
   if(!empty($default_parent_type)){
+    $field_group_types = field_group_formatter_info();
+    $mode = $group->mode == 'form' ? 'form' : 'display';
+    $formatter = $field_group_types[$mode][$default_parent_type];
+
     $form['instance_settings']['show_label'] = array(
             '#title' => t('Show label'),
             '#type' => 'select',
@@ -126,9 +130,6 @@ function _field_group_multiple_default_format_settings($group){
 
 
 
-//   $field_group_types = field_group_formatter_info();
-//   $mode = $group->mode == 'form' ? 'form' : 'display';
-//   $formatter = $field_group_types[$mode][$group->format_type];
 
   return $form;
 }
