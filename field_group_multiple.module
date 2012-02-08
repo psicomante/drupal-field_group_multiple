@@ -11,31 +11,31 @@ function field_group_multiple_theme() {
   return array(
     'field_group_multiple_table_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_container_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_label_value_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_container' =>array(
       'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-container',
       'pattern' => 'field-group-multiple-container__',
       'path' => $path,
-    ),
+  ),
     'field_group_multiple_label_value' =>array(
       'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-label-value',
       'pattern' => 'field-group-multiple-label-value__',
       'path' => $path,
-    ),
+  ),
     'field_group_multiple_table' =>array(
       'variables' => array('group' => NULL,'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-table',
       'pattern' => 'field-group-multiple-table__',
       'path' => $path,
-    ),
+  ),
   );
 }
 
@@ -61,21 +61,21 @@ function field_group_multiple_field_group_formatter_info() {
   	  'format_types' => array('open', 'collapsible', 'collapsed'),
   	  'instance_settings' => $instance_settings,
   	  'default_formatter' => 'open',
-    ),
+  ),
     'field_group_multiple_table' => array(
       'label' => t('Multi field group table'),
       'description' => t('This fieldgroup renders the inner content with a theme.'),
       'format_types' => array('open', 'collapsible', 'collapsed'),
   	  'instance_settings' => $instance_settings,
   	  'default_formatter' => 'open',
-  	),
+  ),
   	'field_group_multiple_label_value' => array(
   	  'label' => t('Multi field group label-value field'),
   	  'description' => t('This fieldgroup renders the inner content with a theme.'),
   	  'format_types' => array('open', 'collapsible', 'collapsed'),
   	  'instance_settings' => $instance_settings + array('label_value_field' => ''),
   	  'default_formatter' => 'open',
-    ),
+  ),
   );
 
   return array(
@@ -132,20 +132,20 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
   if($view_mode == 'form'){
     // Modifications on formular widgets
     $element = array();
-      if(isset($group->format_settings['instance_settings']['parent_format_type'])){
-        $format_type = $group->format_settings['instance_settings']['parent_format_type'];
+    if(isset($group->format_settings['instance_settings']['parent_format_type'])){
+      $format_type = $group->format_settings['instance_settings']['parent_format_type'];
 
-        if(!empty($format_type)){
-          // build the parent group in which the form will be embedded
-          $parent_group = clone $group;
-          $parent_group->format_type = $format_type;
-          $form[$id . "_" . $format_type] = array();
-          field_group_field_group_pre_render($form[$id . "_" . $format_type], $parent_group, $form);
-          $form[$id . "_" . $format_type]['group'] = $form[$id];
-          $form[$id . "_" . $format_type]['#weight'] = $form[$id]['#weight'];
-          unset($form[$id]);
-        }
+      if(!empty($format_type)){
+        // build the parent group in which the form will be embedded
+        $parent_group = clone $group;
+        $parent_group->format_type = $format_type;
+        $form[$id . "_" . $format_type] = array();
+        field_group_field_group_pre_render($form[$id . "_" . $format_type], $parent_group, $form);
+        $form[$id . "_" . $format_type]['group'] = $form[$id];
+        $form[$id . "_" . $format_type]['#weight'] = $form[$id]['#weight'];
+        unset($form[$id]);
       }
+    }
   }else{
     // some display mode
     $elements = array();
@@ -278,7 +278,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
           'callback' => 'field_group_multiple_add_more_js',
           'wrapper' => $wrapper_id,
           'effect' => 'fade',
-        ),
+      ),
       );
 
       foreach($group->children as $field_name){
@@ -312,9 +312,9 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
   if(isset($form['#field_group_multiple'])){
     foreach($form['#field_group_multiple'] as $group_name => $id){
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
-      // TODO get parents from group element
 
-      $parents = array($id, "fields" , "items");
+      if(!isset($group_element['#parents'])) $group_element['#parents'] = array($id);
+      $parents = array_merge($group_element['#parents'], array("fields" , "items") );
       $form_values = drupal_array_get_nested_value($form_state['values'], $parents);
       $items_count = count($form_values);
 
@@ -384,8 +384,8 @@ function theme_field_group_multiple_container_form($variables) {
       'class' => array(
         'field-group-multiple',
   		'field-group-multiple-container',
-      ),
-    ),
+  ),
+  ),
   );
 
   foreach(element_children($items) as $delta){
@@ -397,9 +397,9 @@ function theme_field_group_multiple_container_form($variables) {
           'multiple-inline-element',
           'multiple-item-' . drupal_html_class($delta),
           'clearfix',
-    	  $delta % 2 == 0 ? 'even' : 'odd',
-        ),
-      ),
+    $delta % 2 == 0 ? 'even' : 'odd',
+    ),
+    ),
       '#weight' => $delta,
     );
 
@@ -420,9 +420,9 @@ function theme_field_group_multiple_container_form($variables) {
           'class' => array(
             'multiple-element',
             'multiple-' . drupal_html_class($field_name),
-          ),
-          //'style' => 'width: ' . intval((95 / count($group->children))) . '%;'
-        ),
+      ),
+      //'style' => 'width: ' . intval((95 / count($group->children))) . '%;'
+      ),
         '#weight' => $order,
         'data' => $data,  //$output .= $element['#description'] ? '<div class="description">' . $element['#description'] . '</div>' : '';
 
