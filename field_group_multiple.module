@@ -443,7 +443,6 @@ function theme_field_group_multiple_container_form($variables) {
 
 
 function theme_field_group_multiple_label_value_form($variables) {
-  Logger::log("");
   drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
 
   // TODO
@@ -551,8 +550,6 @@ function theme_field_group_multiple_table_form($variables) {
 
 
 function template_preprocess_field_group_multiple_container(&$variables){
-  Logger::log("");
-  Logger::log($variables);
   drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
 
   // TODO theme suggestions
@@ -578,7 +575,6 @@ function template_preprocess_field_group_multiple_container(&$variables){
     $entries[$delta] = $entry;
   }
   $variables['entries'] = $entries;
-  Logger::log($variables['entries']);
 }
 
 function template_preprocess_field_group_multiple_label_value(&$variables){
@@ -787,7 +783,6 @@ function _field_group_multiple_get_field_values($entity, $fields){
 function _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state){
   $element = null;
   $field_name = $field['field_name'];
-  Logger::log($field_name);
   $parents = $form['#parents'];
   //$delta = isset($get_delta) ? $get_delta : 0;
 
@@ -817,14 +812,10 @@ function _field_group_multiple_get_field_widget($field, $instance, $langcode, $i
               'delta' => $delta,
       );
       drupal_alter(array('field_widget_form', 'field_widget_' . $instance['widget']['type'] . '_form'), $element, $form_state, $context);
-
     }
   }
-  //return empty(element_children($element)) ? $element ;
   return $element;
 }
-
-
 
 
 function _is_field_group_multiple($type){
@@ -854,207 +845,3 @@ function &_field_group_multiple_get_group_wrapper($id, &$form){
   return $form[$id];
 }
 
-
-
-// function field_group_multiple_field_group_build_pre_render_alter(& $element){
-//   Logger::log("");
-// }
-
-// function field_group_multiple_ctools_plugin_api($module, $api){
-//   Logger::log("");
-// }
-// function field_group_multiple_field_group_info(){
-//   Logger::log("");
-// }
-// function field_group_multiple_field_group_update_field_group($group){
-//   Logger::log("");
-// }
-// function field_group_multiple_field_group_delete_field_group($group){
-//   Logger::log("");
-// }
-// function field_group_multiple_field_group_create_field_group($group){
-//   Logger::log("");
-// }
-
-
-// function field_group_multiple_field_form_prepare_validate(&$element, &$form_state){
-
-//   $field_name = $element['#field_name'];
-//   $field_lang = $element['#language'];
-// //  $field_key  = $element['#value_key'];
-//   $columns  = $element['#columns'];
-
-// //   $field = field_widget_field($element, $form_state);
-// //   $columns = array_keys($field['columns']);
-// //   Logger::log($field);
-
-// //   //$instance = field_widget_instance($element, $form_state);
-// //   Logger::log($instance);
-//   // field_
-
-//   Logger::log($field_name);
-//   //Logger::log($element);
-
-//   //Logger::log($form_state['values']);
-//   //$field_parents = array_merge($element['#field_parents'],array($field_name,$field_lang));
-
-//   $field_group_multiple_id = $element['#field_group_multiple'];
-
-//   $group_parents = $form_state['field_group_multiple'][$field_group_multiple_id]['parents'];
-//   $group_parents[] = $field_group_multiple_id;
-//   $group_parents[] = "fields";
-
-//   $values = drupal_array_get_nested_value($form_state['values'], $group_parents);
-
-//   $new_values = array();
-
-//   if(!empty($values) && isset($values['items'])){
-//     $item_count = count($values['items']);
-
-//     if($item_count > 0){
-//       for($i=0;$i<$item_count; $i++){
-//         //$new_values[$i] = "_none";
-//         if(isset($values['items'][$i][$field_name])){
-//           // TODO gilt das nur bei listen???
-//             if($values['items'][$i][$field_name] == '_none'){
-//               $new_values[$i] = 0;
-  //             }else{
-  //               $new_values[$i] = $values['items'][$i][$field_name];
-  //             }
-  // //           }
-  //         }
-  //       }
-  //     }
-  //   }
-
-  // //  Logger::log($new_values);
-  //   $element['#value'] = $new_values;
-  // }
-
-
-  // function field_group_multiple_theme(){
-  //   $path = drupal_get_path('module', 'field_group_multiple');
-
-  //   return array(
-  // 	  'field_group_multiple_label_value' =>
-  // 	    array("variables" => array("element" => NULL,"group" => NULL)),
-  // 	  'field_group_multiple_table' =>
-  // 	    array("variables" => array("element" => NULL,"group" => NULL)),
-  // 	  'field_group_multiple' => array(
-  //       	'variables' => array('group' => NULL,'element' => NULL),
-  //         'template' => 'field_group_multiple',
-  //         'pattern' => 'field_group_multiple__',
-  //         'path' => $path,
-  //     ),
-  //   );
-  // }
-
-
-  /**
-   * A preprocess function for our theme('multi_group_special'). It generates the
-   * variables needed there.
-
-   * See 'multi_group.tpl.php' for their documentation.
-   */
-  /*
-   function template_preprocess_multi_group(&$variables) {
-$group = $variables['group'];
-
-$variables['theme_hook_suggestions'][] = 'multi_group__' . $group->name;
-// // Logger::log(__METHOD__." HALLO ".print_r($variables['theme_hook_suggestions'],true));
-}
-*/
-
-
-  // function theme_multi_group_template($variables){
-  //   $element = $variables['element'];
-  //   $group = $variables['group'];
-
-  //   $rows_size = 0;
-  //   $fields = array();
-  //   $header = array();
-
-  //   foreach($element as $fieldname => $field_data){
-  //     $weight =  $field_data["#weight"];
-  //     $header[$weight] = $field_data["#title"];
-  //     $fields[$weight] = $fieldname;
-
-  //     $tmp_size = count($field_data["#items"]);
-
-  //     if($rows_size < $tmp_size){
-  //       $rows_size = $tmp_size;
-  //     }
-  //   }
-  //   ksort($fields); ksort($header);
-
-  //   $rows = array();
-  //   for($i=0;$i<$rows_size;$i++) {
-  //     $row = array();
-  //     foreach($fields as  $fieldname){
-  //       $field_data = $element[$fieldname][$i];
-  //       $row[] = drupal_render($field_data);
-  //     }
-  //     $rows[] = $row;
-  //   }
-
-  //   $classes = $group->name;
-  //   if (isset($group->format_settings['instance_settings'], $group->format_settings['instance_settings']['classes'])) {
-  //     $classes .= ' ' . check_plain($group->format_settings['instance_settings']['classes']);
-  //   }
-
-
-  //   $out = '<div class="field-group-format ' . $classes. '">
-  //               <span class="field-group-format-toggler">' . check_plain(t($group->label)) . '</span>
-  //               <div class="field-group-format-wrapper" style="display: ' . ($collapsed ? 'none' : 'block') . ';">';
-  //   $out .= theme("table",array("header"=>$header,"rows"=>$rows));
-  //   $out .= '</div></div>';
-
-
-  //   return $out;
-  // }
-
-
-  // function theme_multi_group_label_value($variables){
-  //   $element = $variables['element'];
-  //   $group = $variables['group'];
-
-
-  //   $fields = array();
-  //   foreach($element as $fieldname => $field_data){
-  //     $weight =  $field_data["#weight"];
-  //     $fields[$weight] = $fieldname;
-  //   }
-  //   ksort($fields);
-
-
-  //   $labels = $element[array_shift($fields)];
-  //   $values = $element[array_shift($fields)];
-
-  //   $defaults = array();
-  //   $defaults['#theme'] = "field";
-  //   $defaults['#access'] = TRUE;
-  //   $defaults['#label_display'] = $values['#label_display'];
-  //   $defaults['#field_name'] = $values['#field_name'];
-  //   $defaults['#bundle'] = $values['#bundle'];
-  //   $defaults['#field_type'] = $values['#field_type'];
-
-  //   $size = count($values['#items']);
-  //   $items = array();
-
-  //   for($i=0; $i < $size; $i++) {
-  //     $tmp = $defaults;
-  //     $tmp['#title'] = ucfirst($labels[$i]["#markup"]);
-  //     $tmp['#items'][0] = $values['#items'][$i];
-  //     $tmp[0]['#markup'] = $values[$i]['#markup'];
-
-  //     $items[] = drupal_render($tmp);
-  //   }
-
-  //   if(isset($group->name))	$classes = $group->name;
-  //   else $classes = '';
-  //   if (isset($group->format_settings['instance_settings'], $group->format_settings['instance_settings']['classes'])) {
-  //     $classes .= ' ' . check_plain($group->format_settings['instance_settings']['classes']);
-  //   }
-
-  //   return implode("\n",$items);
-  // }
