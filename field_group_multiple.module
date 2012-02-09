@@ -552,7 +552,6 @@ function theme_field_group_multiple_table_form($variables) {
 function template_preprocess_field_group_multiple_container(&$variables){
   drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
 
-  // TODO theme suggestions
   $group = $variables['group'];
   $elements = $variables['elements'];
   $items = $variables['items'];
@@ -587,7 +586,6 @@ function template_preprocess_field_group_multiple_container(&$variables){
 }
 
 function template_preprocess_field_group_multiple_label_value(&$variables){
-  // TODO theme suggestions
   drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
 
   $group = $variables['group'];
@@ -625,7 +623,6 @@ function template_preprocess_field_group_multiple_label_value(&$variables){
 
 
 function template_preprocess_field_group_multiple_table(&$variables){
-  // TODO theme suggestions
   drupal_add_css(drupal_get_path("module", "field_group_multiple")."/field_group_multiple.css");
 
   $group = $variables['group'];
@@ -717,18 +714,12 @@ function _field_group_multiple_after_build_calculate_items($id, $entity_type, $e
       $items[$delta][$field_name] = $widget;
     }
   }
-
   $group_element['fields']['items'] = $items;
 }
 
 
 /**
  * TODO rename to build_widget_delta_items
- * Enter description here ...
- * @param unknown_type $widget
- * @param unknown_type $delta
- * @param unknown_type $values
- * @param unknown_type $widget_key
  */
 function _field_group_multiple_populate_widget_delta($widget, $delta,  $values, $widget_key = null){
   $new_widget = $widget;
@@ -740,7 +731,6 @@ function _field_group_multiple_populate_widget_delta($widget, $delta,  $values, 
     $columns = $new_widget['#columns'];
 
     unset($new_widget['#title'], $new_widget['#description'], $new_widget['#value']);
-
     $new_widget['#multiple'] = 0;
 
     if(isset($new_widget['#value_key']) && isset($values[$new_widget['#value_key']]) && !is_null($values[$new_widget['#value_key']])){
