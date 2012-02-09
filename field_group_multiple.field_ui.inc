@@ -39,7 +39,6 @@ function _field_group_multiple_field_ui_overview_operation($form, &$form_state, 
           $group->format_type = $data['format']['type'];
           $group->children = array_keys($map, $field_name);
 
-          // TODO get children
           $function($form, $form_state, $group);
         }
       }
@@ -125,12 +124,6 @@ function _field_group_multiple_default_format_settings($group){
             '#weight' => 3,
     );
   }
-
-
-
-
-
-
   return $form;
 }
 
@@ -144,7 +137,8 @@ function _field_group_multiple_default_format_summary($group){
 function _field_group_multiple_default_format_validate($form, &$form_state, $group){
   $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
   if(min($cardinalities) != max($cardinalities)){
-    form_set_error("fields[".$group->group_name."][format][type]",t('Field cardinalities in group !group_name are not equal.', array('!group_name' => $group->group_name)));
+    form_set_error("fields[".$group->group_name."][format][type]",
+      t('Field cardinalities in group !group_name must be equal.', array('!group_name' => $group->group_name)));
   }
 }
 
@@ -163,13 +157,6 @@ function _field_group_multiple_table_format_settings($group){
 
 
 function _field_group_multiple_table_format_summary($group){
-//   $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
-//   $output = array();
-//   foreach($cardinalities as $field_name => $value){
-//     $output[] = $field_name.": ".$value;
-//   }
-
-//   return theme("item_list",array("items"=>$output));
 }
 
 function _field_group_multiple_table_format_validate($form, &$form_state, $group){
@@ -249,7 +236,7 @@ function _field_group_multiple_label_value_format_validate($form, &$form_state, 
   }
 
   if(count($group->children) != 2){
-    form_set_error("fields[".$group->group_name."]", t('Only two fields can be grouped in "!group_name" with type Label-Value. ', array('!group_name' => $group->group_name)));
+    form_set_error("fields[".$group->group_name."]", t('Only two fields can be attached to "!group_name" because the group-type is of label-value.', array('!group_name' => $group->group_name)));
   }
 }
 

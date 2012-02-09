@@ -1,5 +1,5 @@
 name = Field group multiple
-description = Widget and display formatter for field group module which allow to multigroup fields 
+description = Widget and display formatter for transposed grouping of multiple value fields. 
 package = Fields
 core = 7.x
 
