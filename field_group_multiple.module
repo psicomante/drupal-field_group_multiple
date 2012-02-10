@@ -197,10 +197,10 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
 
     $element['#weight'] = $group->weight;
     $element['items'] = array(
-         '#theme' => $group->format_type,
-         '#items' => $array_transposed,
-         '#group' => $group,
-         '#elements' => $elements,
+      '#theme' => $group->format_type,
+      '#items' => $array_transposed,
+      '#group' => $group,
+      '#elements' => $elements,
     );
   }
 }
@@ -213,6 +213,9 @@ function field_group_multiple_add_more_submit($form, &$form_state) {
 
   if (isset($element['fields'])) {
     $id = $element['fields']['#id'];
+//     if (!isset($form_state['field_group_multiple'][$id]['count'])) {
+//       $form_state['field_group_multiple'][$id]['count'] = 1;
+//     }
     $form_state['field_group_multiple'][$id]['count']++;
   }
 
@@ -685,14 +688,18 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
   $field_values = _field_group_multiple_get_field_values($entity, $group_element['fields']['#orginal']);
 
   $field_value_count = count($field_values);
-  $items_count = 1;
+  $items_count = 0;
 
   if (isset($form_state['field_group_multiple'][$id]['count'])) {
     $items_count = $form_state['field_group_multiple'][$id]['count'];
   }
   else{
-    //if($items_count == 0) $items_count++;
     $form_state['field_group_multiple'][$id]['count'] = $items_count = $field_value_count;
+  }
+  Logger::log($items_count);
+  if($items_count == 0){
+    $items_count++;
+    $form_state['field_group_multiple'][$id]['count'] = $items_count;
   }
 
   if (($c_diff = abs($items_count - $field_value_count)) > 0) {
