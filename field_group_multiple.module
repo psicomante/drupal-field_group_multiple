@@ -696,7 +696,7 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
   else{
     $form_state['field_group_multiple'][$id]['count'] = $items_count = $field_value_count;
   }
-  Logger::log($items_count);
+
   if($items_count == 0){
     $items_count++;
     $form_state['field_group_multiple'][$id]['count'] = $items_count;
