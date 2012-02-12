@@ -8,6 +8,7 @@ function field_group_multiple_field_ui_overview_form_alter(&$form, &$form_state,
   $form['#submit'][] = "field_group_multiple_field_overview_submit";
 }
 
+
 function field_group_multiple_field_overview_validate($form, &$form_state) {
   _field_group_multiple_field_ui_overview_operation($form, $form_state, 'validate');
 }
@@ -48,6 +49,7 @@ function _field_group_multiple_field_ui_overview_operation($form, &$form_state, 
   }
 }
 
+
 function _field_group_multiple_get_fields_infos($field_names, $key) {
   $cardinalities = array();
   foreach ($field_names as $field_name) {
@@ -55,8 +57,8 @@ function _field_group_multiple_get_fields_infos($field_names, $key) {
     $cardinalities[$field_name] = $instance[$key];
   }
   return $cardinalities;
-
 }
+
 
 function _field_group_multiple_allowed_parent_formatter($view_mode) {
   // TODO currently only two formatter allowed, check the other
@@ -105,25 +107,25 @@ function _field_group_multiple_default_format_settings($group) {
       '#weight' => 2,
     );
     $form['instance_settings']['label_element'] = array(
-            '#title' => t('Label element'),
-            '#type' => 'select',
-            '#options' => array('h2' => t('Header 2'), 'h3' => t('Header 3')),
-            '#default_value' => isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : $formatter['instance_settings']['label_element'],
-            '#weight' => 2,
+      '#title' => t('Label element'),
+      '#type' => 'select',
+      '#options' => array('h2' => t('Header 2'), 'h3' => t('Header 3')),
+      '#default_value' => isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : $formatter['instance_settings']['label_element'],
+      '#weight' => 2,
     );
     $form['instance_settings']['effect'] = array(
-            '#title' => t('Effect'),
-            '#type' => 'select',
-            '#options' => array('none' => t('None'), 'blind' => t('Blind')),
-            '#default_value' => isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : $formatter['instance_settings']['effect'],
-            '#weight' => 2,
+      '#title' => t('Effect'),
+      '#type' => 'select',
+      '#options' => array('none' => t('None'), 'blind' => t('Blind')),
+      '#default_value' => isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : $formatter['instance_settings']['effect'],
+      '#weight' => 2,
     );
     $form['instance_settings']['speed'] = array(
-            '#title' => t('Speed'),
-            '#type' => 'select',
-            '#options' => array('none' => t('None'), 'slow' => t('Slow'), 'fast' => t('Fast')),
-            '#default_value' => isset($group->format_settings['instance_settings']['speed']) ? $group->format_settings['instance_settings']['speed'] : $formatter['instance_settings']['speed'],
-            '#weight' => 3,
+      '#title' => t('Speed'),
+      '#type' => 'select',
+      '#options' => array('none' => t('None'), 'slow' => t('Slow'), 'fast' => t('Fast')),
+      '#default_value' => isset($group->format_settings['instance_settings']['speed']) ? $group->format_settings['instance_settings']['speed'] : $formatter['instance_settings']['speed'],
+      '#weight' => 3,
     );
   }
   return $form;
