@@ -11,31 +11,31 @@ function field_group_multiple_theme() {
   return array(
     'field_group_multiple_table_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_container_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_label_value_form' => array(
       'render element' => 'elements',
-    ),
+  ),
     'field_group_multiple_container' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-container',
       'pattern' => 'field-group-multiple-container__',
       'path' => $path,
-    ),
+  ),
     'field_group_multiple_label_value' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-label-value',
       'pattern' => 'field-group-multiple-label-value__',
       'path' => $path,
-    ),
+  ),
     'field_group_multiple_table' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-table',
       'pattern' => 'field-group-multiple-table__',
       'path' => $path,
-    ),
+  ),
   );
 }
 
@@ -61,21 +61,21 @@ function field_group_multiple_field_group_formatter_info() {
       'format_types' => array('open', 'collapsible', 'collapsed'),
       'instance_settings' => $instance_settings,
       'default_formatter' => 'open',
-    ),
+  ),
     'field_group_multiple_table' => array(
       'label' => t('Multiple fields table'),
       'description' => t('This field group type renders the items of multiple fields in the group as rows of the table.'),
       'format_types' => array('open', 'collapsible', 'collapsed'),
       'instance_settings' => $instance_settings,
       'default_formatter' => 'open',
-    ),
+  ),
     'field_group_multiple_label_value' => array(
       'label' => t('Multiple fields as label-value'),
       'description' => t('This field group type renders the items of two multiple fields in the group as single fields where the label of field is the value of the selected label-field and the other field represents the value.'),
       'format_types' => array('open', 'collapsible', 'collapsed'),
       'instance_settings' => $instance_settings + array('label_value_field' => ''),
       'default_formatter' => 'open',
-    ),
+  ),
   );
 
   return array(
@@ -151,6 +151,11 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         unset($form[$id]);
       }
     }
+
+    // disable form widgets
+    foreach($group->children as $field_name){
+      unset($form[$field_name]);
+    }
   }
   else {
     // some display mode
@@ -219,9 +224,9 @@ function field_group_multiple_add_more_submit($form, &$form_state) {
 
   if (isset($element['fields'])) {
     $id = $element['fields']['#id'];
-//     if (!isset($form_state['field_group_multiple'][$id]['count'])) {
-//       $form_state['field_group_multiple'][$id]['count'] = 1;
-//     }
+    //     if (!isset($form_state['field_group_multiple'][$id]['count'])) {
+    //       $form_state['field_group_multiple'][$id]['count'] = 1;
+    //     }
     $form_state['field_group_multiple'][$id]['count']++;
   }
 
@@ -245,6 +250,18 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
   if (!empty($groups)) {
 
+     array_unshift(
+       $form,
+       array('_field_multiple_group_validate' =>
+         array(
+          '#name' => '_field_group_multiple_validate',
+          '#input' => TRUE,
+          '#value_callback' => "_field_group_multiple_form_pre_validate",
+         )
+       )
+     );
+
+
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
@@ -255,6 +272,8 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
       $form['#field_group_multiple'][$group->group_name] = $id;
 
+      $form_state['field_group_multiple'][$id]['children'] = array();
+
       if (!isset($form['#parents'])) {
         $form_state['field_group_multiple'][$id]['parents'] = array();
       }
@@ -264,13 +283,22 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
       $wrapper_id = $id . '-add-more-wrapper';
 
+      //$form['#element_validate'] = array('_field_group_multiple_pre_validate');
+
       // TODO currently subgrouping is not allowed, solve this
-      $form[$id] = array(
+      $group_template = array(
         '#prefix' => '<div id="' . $wrapper_id . '">',
         '#suffix' => '</div>',
         '#group_name' => $group->group_name,
         '#tree' => TRUE,
+        // we want validate before elements are validated
+        //'#element_validate' => array('_field_group_multiple_pre_validate')
+        '#id' => $id,
       );
+
+      // attach at the top of the form
+      $form[$id] = $group_template;
+
 
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
@@ -286,10 +314,28 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $cardinalities = array();
       foreach ($group->children as $field_name) {
         $langcode = $form[$field_name]['#language'];
+        $form_state['field_group_multiple'][$id]['children'][$field_name] = $langcode;
         $field_state = field_form_get_state($form_state['field_group_multiple'][$id]['parents'], $field_name, $langcode, $form_state);
         $field = $field_state['field'];
         $instance = $field_state['instance'];
         $cardinalities[$field_name] = $field['cardinality'];
+
+//      $form_state['field_group_multiple'][$id]['parents']
+//      $form[$field_name]
+//         Logger::log($form[$field_name]);
+//         if(!isset($form[$field_name]['#element_validate'])){
+//           $form[$field_name]['#element_validate'] = array();
+//         }
+//         foreach(element_children($form[$field_name][$langcode]) as $nr){
+//           if(!isset($form[$field_name][$langcode][$nr]['#element_validate'])){
+//             $form[$field_name][$langcode][$nr]['#element_validate'] = array();
+//           }
+//           $form[$field_name][$langcode][$nr]['#field_group_multiple'] = $id;
+//           array_unshift($form[$field_name][$langcode][$nr]['#element_validate'], '_field_group_multiple_pre_validate_element');
+//         }
+
+
+        //array_unshift($form[$field_name]['#element_validate'], '_field_group_multiple_pre_validate');
 
         // TODO check field access!!
         $items = field_get_default_value($entity_type, $entity, $field, $instance, $langcode);
@@ -299,7 +345,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
         $group_element['fields']['#widget'][$field_name] = $widget;
 
         //unset($form[$field_name]);
-        $form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
+        //$form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
       }
 
       _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, $form, $form_state);
@@ -330,7 +376,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
             'callback' => 'field_group_multiple_add_more_js',
             'wrapper' => $wrapper_id,
             'effect' => 'fade',
-          ),
+        ),
         );
       }
       else {
@@ -338,6 +384,61 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       }
     }
   }
+}
+
+
+function _field_group_multiple_form_pre_validate($element,$input, &$form_state){
+  if(!isset($form_state['field_group_multiple']) || empty($form_state['field_group_multiple'])) return "";
+
+  $field_data = array();
+  foreach($form_state['field_group_multiple'] as $id => $group_data){
+    $parents = $group_data['parents'];
+    array_unshift($parents, 'input');
+    $parents[] = $id;
+    $parents[] = 'fields';
+    $parents[] = 'items';
+    $input_data = drupal_array_get_nested_value($form_state, $parents);
+    if(empty($input_data)) continue;
+    Logger::log($input_data);
+    $children = $group_data['children'];
+    foreach($input_data as $delta => $_field_value){
+
+      foreach($_field_value as $field_name => $value){
+        if(isset($children[$field_name])){
+          $lang = $children[$field_name];
+          $field_data[$field_name][$lang][$delta] = $value;
+        }
+      }
+    }
+  }
+
+  Logger::log($field_data);
+
+  drupal_array_set_nested_value($form_state, array('values'), $field_data);
+
+  Logger::log($form_state['values']);
+  return "";
+  //$form['#field_group_multiple'][$group->group_name]
+}
+
+function _field_group_multiple_pre_validate_element($element, &$form_state){
+//   $field_name = $element['#field_name'];
+//   $language = $element['#language'];
+//   Logger::log($field_name . ' => ' . $language);
+//   //Logger::log($element['#parents']);
+
+//   $id = $element['#field_group_multiple'];
+//   //Logger::log($form_state['values'][$id]);
+
+//   $field_values = array();
+//   foreach($form_state['values'][$id]['fields']['items'] as $delta => $_field_values){
+//     if(isset($_field_values[$field_name])){
+//       $field_values[$delta] = $_field_values[$field_name];
+//     }
+//   }
+
+//   drupal_array_set_nested_value($form_state, array('values', $field_name, $language), $field_values, true);
+  //Logger::log($form_state);
 }
 
 
@@ -368,7 +469,8 @@ function _field_group_multiple_get_max_cardinality($cardinalities = array()){
  */
 function field_group_multiple_field_attach_submit($entity_type, &$entity, $form, &$form_state) {
 
-  if (isset($form['#field_group_multiple'])) {
+  Logger::log($form_state);
+  if (false && isset($form['#field_group_multiple'])) {
     foreach ($form['#field_group_multiple'] as $group_name => $id) {
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
@@ -428,8 +530,8 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 
 
 /**
-* TODO implement drag & drop for order and remove item row
-*/
+ * TODO implement drag & drop for order and remove item row
+ */
 function theme_field_group_multiple_container_form($variables) {
   drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
 
@@ -446,8 +548,8 @@ function theme_field_group_multiple_container_form($variables) {
       'class' => array(
         'field-group-multiple',
         'field-group-multiple-container',
-      ),
-    ),
+  ),
+  ),
   );
 
   foreach (element_children($items) as $delta) {
@@ -459,9 +561,9 @@ function theme_field_group_multiple_container_form($variables) {
           'multiple-inline-element',
           'multiple-item-' . drupal_html_class($delta),
           'clearfix',
-          $delta % 2 == 0 ? 'even' : 'odd',
-        ),
-      ),
+    $delta % 2 == 0 ? 'even' : 'odd',
+    ),
+    ),
       '#weight' => $delta,
     );
 
@@ -482,9 +584,9 @@ function theme_field_group_multiple_container_form($variables) {
           'class' => array(
             'multiple-element',
             'multiple-' . drupal_html_class($field_name),
-          ),
-         //'style' => 'width: ' . intval((95 / count($group->children))) . '%;'
-        ),
+      ),
+      //'style' => 'width: ' . intval((95 / count($group->children))) . '%;'
+      ),
         '#weight' => $order,
         'data' => $data,
       );
@@ -504,8 +606,8 @@ function theme_field_group_multiple_container_form($variables) {
 }
 
 /**
-* TODO implement drag & drop for order and remove item row
-*/
+ * TODO implement drag & drop for order and remove item row
+ */
 function theme_field_group_multiple_label_value_form($variables) {
   drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
 
