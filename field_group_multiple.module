@@ -303,14 +303,15 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $add_more_enable = false;
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED) {
         $add_more_enable = true;
-      } else {
-        $group_element['fields']['#description'] = t('Maxium of items is limited to !count', array('!count' => $cardinality));
-        if($items_count < $cardinality) {
+      }
+      else {
+        if ($items_count < $cardinality) {
           $add_more_enable = true;
+          $group_element['fields']['#description'] = t('The maxium of items is limited to !count.', array('!count' => $cardinality));
         }
       }
 
-      if($add_more_enable){
+      if ($add_more_enable) {
         $group_element['add-more'] = array(
           '#type' => 'submit',
           '#name' => strtr($id, '-', '_') . '_add_more',
@@ -325,7 +326,9 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
           ),
         );
       }
-
+      else {
+        $group_element['fields']['#description'] = t('The maxium of !count items is reached.', array('!count' => $cardinality));
+      }
     }
   }
 }
