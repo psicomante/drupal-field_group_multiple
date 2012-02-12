@@ -192,8 +192,6 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
     }
 
-
-
     if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
       $format_type = $group->format_settings['instance_settings']['parent_format_type'];
       if (!empty($format_type)) {
