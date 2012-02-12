@@ -86,6 +86,7 @@ function _field_group_multiple_default_format_settings($group) {
   $default_parent_type = isset($group->format_settings['instance_settings']['parent_format_type']) ? $group->format_settings['instance_settings']['parent_format_type'] : "";
 
   $formatter_options = _field_group_multiple_allowed_parent_formatter($group->mode);
+
   $form['instance_settings']['parent_format_type'] = array(
     '#title' => t("Parent format type"),
     '#type' => 'select',
@@ -106,6 +107,7 @@ function _field_group_multiple_default_format_settings($group) {
       '#default_value' => isset($group->format_settings['instance_settings']['show_label']) ? $group->format_settings['instance_settings']['show_label'] : $formatter['instance_settings']['show_label'],
       '#weight' => 2,
     );
+
     $form['instance_settings']['label_element'] = array(
       '#title' => t('Label element'),
       '#type' => 'select',
@@ -113,6 +115,7 @@ function _field_group_multiple_default_format_settings($group) {
       '#default_value' => isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : $formatter['instance_settings']['label_element'],
       '#weight' => 2,
     );
+
     $form['instance_settings']['effect'] = array(
       '#title' => t('Effect'),
       '#type' => 'select',
@@ -120,6 +123,7 @@ function _field_group_multiple_default_format_settings($group) {
       '#default_value' => isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : $formatter['instance_settings']['effect'],
       '#weight' => 2,
     );
+
     $form['instance_settings']['speed'] = array(
       '#title' => t('Speed'),
       '#type' => 'select',
@@ -135,14 +139,25 @@ function _field_group_multiple_default_format_settings($group) {
  * Default summary
  */
 function _field_group_multiple_default_format_summary($group) {
+  $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
+  $min_cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
+  $info = '<em>This value depends on the shortest selected "number of values" of the grouped fields.</em>';
+  if($min_cardinality == FIELD_CARDINALITY_UNLIMITED) {
+    return '<div class="description">' . t('The maximal amount of items that can be added is unlimited.<br/>' . $info , array('!count' => $min_cardinality)) . '</div>';
+  }
+  else {
+    return '<div class="description">' . t('The maximal amount of items that can be added is !count.<br/>' . $info , array('!count' => $min_cardinality)) . '</div>';
+  }
 
 }
 
 function _field_group_multiple_default_format_validate($form, &$form_state, $group) {
   $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
-  if (min($cardinalities) != max($cardinalities)) {
-    form_set_error("fields[" . $group->group_name . "][format][type]",
-      t('Field cardinalities in group !group_name must be equal.', array('!group_name' => $group->group_name)));
+  if(!empty($cardinalities)){
+    if (min($cardinalities) != max($cardinalities)) {
+      form_set_error("fields[" . $group->group_name . "][format][type]",
+        t('Field cardinalities in group !group_name must be equal.', array('!group_name' => $group->group_name)));
+    }
   }
 }
 
@@ -161,6 +176,7 @@ function _field_group_multiple_table_format_settings($group) {
 
 
 function _field_group_multiple_table_format_summary($group) {
+  return _field_group_multiple_default_format_summary($group);
 }
 
 function _field_group_multiple_table_format_validate($form, &$form_state, $group) {
@@ -182,7 +198,7 @@ function _field_group_multiple_container_format_settings($group) {
 
 
 function _field_group_multiple_container_format_summary($group) {
-
+  return _field_group_multiple_default_format_summary($group);
 }
 
 
@@ -221,7 +237,7 @@ function _field_group_multiple_label_value_format_settings($group) {
 
 
 function _field_group_multiple_label_value_format_summary($group) {
-
+  return _field_group_multiple_default_format_summary($group);
 }
 
 
@@ -247,4 +263,5 @@ function _field_group_multiple_label_value_format_validate($form, &$form_state, 
 
 
 function _field_group_multiple_label_value_format_submit($form, &$form_state, $group) {
+
 }

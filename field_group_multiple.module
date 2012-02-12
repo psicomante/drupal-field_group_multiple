@@ -134,6 +134,9 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
   if ($view_mode == 'form') {
     // Modifications on formular widgets
     $element = array();
+
+    if(empty($group->children)) return; // do nothing if no fields are grouped
+
     if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
       $format_type = $group->format_settings['instance_settings']['parent_format_type'];
 
@@ -151,8 +154,12 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
   }
   else {
     // some display mode
+
+    $element = array(); // reset element
     $elements = array();
     $array_transposed = array();
+
+    if(empty($group->children)) return; // do nothing if no fields are grouped
 
     foreach ($group->children as $field_name) {
       $field =  $element[$field_name];
@@ -185,7 +192,8 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
     }
 
-    $element = array();
+
+
     if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
       $format_type = $group->format_settings['instance_settings']['parent_format_type'];
       if (!empty($format_type)) {
@@ -242,6 +250,8 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
+      if(empty($group->children)) continue; // do nothing if no fields are grouped
+
       $id = _field_group_multiple_id($group, 'form');
       if (empty($form['#field_group_multiple'])) $form['#field_group_multiple'] = array();
 
@@ -257,7 +267,6 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $wrapper_id = $id . '-add-more-wrapper';
 
       // TODO currently subgrouping is not allowed, solve this
-
       $form[$id] = array(
         '#prefix' => '<div id="' . $wrapper_id . '">',
         '#suffix' => '</div>',
