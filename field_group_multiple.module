@@ -160,7 +160,6 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
   else {
     // some display mode
 
-    $element = array(); // reset element
     $elements = array();
     $array_transposed = array();
 
@@ -196,6 +195,8 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         }
       }
     }
+
+    $element = array(); // reset element
 
     if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
       $format_type = $group->format_settings['instance_settings']['parent_format_type'];
@@ -250,18 +251,6 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
   if (!empty($groups)) {
 
-     array_unshift(
-       $form,
-       array('_field_multiple_group_validate' =>
-         array(
-          '#name' => '_field_group_multiple_validate',
-          '#input' => TRUE,
-          '#value_callback' => "_field_group_multiple_form_pre_validate",
-         )
-       )
-     );
-
-
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
@@ -283,23 +272,17 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
       $wrapper_id = $id . '-add-more-wrapper';
 
-      //$form['#element_validate'] = array('_field_group_multiple_pre_validate');
-
       // TODO currently subgrouping is not allowed, solve this
       $group_template = array(
+        '#id' => $id,
         '#prefix' => '<div id="' . $wrapper_id . '">',
         '#suffix' => '</div>',
         '#group_name' => $group->group_name,
         '#tree' => TRUE,
-        // we want validate before elements are validated
-        //'#element_validate' => array('_field_group_multiple_pre_validate')
-        '#id' => $id,
       );
 
       // attach at the top of the form
       $form[$id] = $group_template;
-
-
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
       $group_element['fields'] = array(
@@ -315,43 +298,24 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       foreach ($group->children as $field_name) {
         $langcode = $form[$field_name]['#language'];
         $form_state['field_group_multiple'][$id]['children'][$field_name] = $langcode;
+
         $field_state = field_form_get_state($form_state['field_group_multiple'][$id]['parents'], $field_name, $langcode, $form_state);
         $field = $field_state['field'];
         $instance = $field_state['instance'];
         $cardinalities[$field_name] = $field['cardinality'];
 
-//      $form_state['field_group_multiple'][$id]['parents']
-//      $form[$field_name]
-//         Logger::log($form[$field_name]);
-//         if(!isset($form[$field_name]['#element_validate'])){
-//           $form[$field_name]['#element_validate'] = array();
-//         }
-//         foreach(element_children($form[$field_name][$langcode]) as $nr){
-//           if(!isset($form[$field_name][$langcode][$nr]['#element_validate'])){
-//             $form[$field_name][$langcode][$nr]['#element_validate'] = array();
-//           }
-//           $form[$field_name][$langcode][$nr]['#field_group_multiple'] = $id;
-//           array_unshift($form[$field_name][$langcode][$nr]['#element_validate'], '_field_group_multiple_pre_validate_element');
-//         }
-
-
-        //array_unshift($form[$field_name]['#element_validate'], '_field_group_multiple_pre_validate');
-
         // TODO check field access!!
-        $items = field_get_default_value($entity_type, $entity, $field, $instance, $langcode);
-        $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, 0, $form, $form_state);
-
         $group_element['fields']['#orginal'][$field_name] = $form[$field_name];
-        $group_element['fields']['#widget'][$field_name] = $widget;
+        $group_element['fields']['#fields'][$field_name] = $field_state;
 
-        //unset($form[$field_name]);
-        //$form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
+        $form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
       }
 
-      _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, $form, $form_state);
-
-      $items_count = $form_state['field_group_multiple'][$id]['count'];
       $cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
+      _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, $form, $form_state, $cardinality);
+      $items_count = $form_state['field_group_multiple'][$id]['count'];
+
+      $form_state['field_group_multiple'][$id]['cardinality'] = $cardinality;
 
       $add_more_enable = false;
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED) {
@@ -376,13 +340,15 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
             'callback' => 'field_group_multiple_add_more_js',
             'wrapper' => $wrapper_id,
             'effect' => 'fade',
-        ),
+          ),
         );
       }
       else {
         $group_element['fields']['#description'] = t('The maxium of !count items is reached.', array('!count' => $cardinality));
       }
+
     }
+
   }
 }
 
@@ -399,10 +365,11 @@ function _field_group_multiple_form_pre_validate($element,$input, &$form_state){
     $parents[] = 'items';
     $input_data = drupal_array_get_nested_value($form_state, $parents);
     if(empty($input_data)) continue;
+
     Logger::log($input_data);
     $children = $group_data['children'];
-    foreach($input_data as $delta => $_field_value){
 
+    foreach($input_data as $delta => $_field_value){
       foreach($_field_value as $field_name => $value){
         if(isset($children[$field_name])){
           $lang = $children[$field_name];
@@ -410,13 +377,12 @@ function _field_group_multiple_form_pre_validate($element,$input, &$form_state){
         }
       }
     }
+
   }
 
-  Logger::log($field_data);
-
-  drupal_array_set_nested_value($form_state, array('values'), $field_data);
-
-  Logger::log($form_state['values']);
+  //drupal_array_set_nested_value($form_state, array('values'), $field_data);
+  $form_state['input'] += $field_data;
+  //drupal_array_set_nested_value($form_state, array('values'), $field_data);
   return "";
   //$form['#field_group_multiple'][$group->group_name]
 }
@@ -464,13 +430,15 @@ function _field_group_multiple_get_max_cardinality($cardinalities = array()){
   return $min_cardinality;
 }
 
+
 /**
  * Implements hook_field_attach_form().
  */
 function field_group_multiple_field_attach_submit($entity_type, &$entity, $form, &$form_state) {
 
   Logger::log($form_state);
-  if (false && isset($form['#field_group_multiple'])) {
+  if (isset($form['#field_group_multiple'])) {
+    //Logger::log($form_state);
     foreach ($form['#field_group_multiple'] as $group_name => $id) {
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
@@ -816,7 +784,7 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 }
 
 
-function _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, &$form, &$form_state) {
+function _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, &$form, &$form_state, $cardinality) {
   $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
   $field_names = element_children($group_element['fields']['#widget']);
@@ -829,13 +797,13 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
   $field_values = _field_group_multiple_get_field_values($entity, $group_element['fields']['#orginal']);
 
   $field_value_count = count($field_values);
-  $items_count = 0;
+  $items_count = $cardinality == FIELD_CARDINALITY_UNLIMITED ? 0 : $cardinality;
 
   if (isset($form_state['field_group_multiple'][$id]['count'])) {
     $items_count = $form_state['field_group_multiple'][$id]['count'];
   }
   else{
-    $form_state['field_group_multiple'][$id]['count'] = $items_count = $field_value_count;
+    $form_state['field_group_multiple'][$id]['count'] = $items_count;// = $field_value_count;
   }
 
   if($items_count == 0){
@@ -853,15 +821,39 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
     }
   }
 
+  $fields = array();
+  foreach($group_element['fields']['#fields'] as $field_name => $field_config){
+    $langcode = 'und';
+    $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
+    if(!$fields[$field_name]['items']){
+      $fields[$field_name]['items'] = array();
+    }
+    $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
+  }
+
   $items = array();
   for ($delta=0; $delta < $items_count; $delta++) {
-    $field_cols = $field_values[$delta];
-    foreach ($field_cols as $field_name => $field_value) {
-      $widget = $fields[$field_name];
-      $widget = _field_group_multiple_build_widget_items_delta($widget, $delta, $field_value, NULL);
+    //$field_cols = $field_values[$delta];$group_element['fields']['#fields']
+    foreach ($fields as $field_name => $field_items) {
+      $field_config = $group_element['fields']['#fields'][$field_name];
+
+      $field_items = array();
+      if(isset($fields[$field_name]['items'][$delta])){
+         $field_items[$delta] = $fields[$field_name]['items'][$delta];
+      }else{
+        $field_items[$delta] = $fields[$field_name]['default'];
+      }
+
+      $widget = _field_group_multiple_get_field_widget($field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
+
+    //foreach ($fields_cols as $field_name => $field_value) {
+      //$widget = $fields[$field_name][$delta];
+      //$widget = _field_group_multiple_build_widget_items_delta($widget, $delta, $field_value, NULL);
+      //$items[$delta][$field_name] = $widget;
       $items[$delta][$field_name] = $widget;
     }
   }
+  Logger::log($items);
   $group_element['fields']['items'] = $items;
 }
 
