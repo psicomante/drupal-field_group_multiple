@@ -317,117 +317,25 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
       $form_state['field_group_multiple'][$id]['cardinality'] = $cardinality;
 
-      $add_more_enable = false;
+      //$add_more_enable = false;
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED) {
-        $add_more_enable = true;
-      }
-      else {
-        if ($items_count < $cardinality) {
-          $add_more_enable = true;
-          $group_element['fields']['#description'] = t('The maxium of items is limited to !count.', array('!count' => $cardinality));
-        }
-      }
-
-      if ($add_more_enable) {
+        //$add_more_enable = true;
         $group_element['add-more'] = array(
-          '#type' => 'submit',
-          '#name' => strtr($id, '-', '_') . '_add_more',
-          '#value' => t('Add another item'),
-          '#attributes' => array('class' => array('field-group-multiple-add-more-submit')),
-          '#limit_validation_errors' => array(array_merge($form_state['field_group_multiple'][$id]['parents'], array($id))),
-          '#submit' => array('field_group_multiple_add_more_submit'),
-          '#ajax' => array(
-            'callback' => 'field_group_multiple_add_more_js',
-            'wrapper' => $wrapper_id,
-            'effect' => 'fade',
+                  '#type' => 'submit',
+                  '#name' => strtr($id, '-', '_') . '_add_more',
+                  '#value' => t('Add another item'),
+                  '#attributes' => array('class' => array('field-group-multiple-add-more-submit')),
+                  '#limit_validation_errors' => array(array_merge($form_state['field_group_multiple'][$id]['parents'], array($id))),
+                  '#submit' => array('field_group_multiple_add_more_submit'),
+                  '#ajax' => array(
+                    'callback' => 'field_group_multiple_add_more_js',
+                    'wrapper' => $wrapper_id,
+                    'effect' => 'fade',
           ),
         );
       }
-      else {
-        $group_element['fields']['#description'] = t('The maxium of !count items is reached.', array('!count' => $cardinality));
-      }
-
-    }
-
-  }
-}
-
-
-function _field_group_multiple_form_pre_validate($element,$input, &$form_state){
-  if(!isset($form_state['field_group_multiple']) || empty($form_state['field_group_multiple'])) return "";
-
-  $field_data = array();
-  foreach($form_state['field_group_multiple'] as $id => $group_data){
-    $parents = $group_data['parents'];
-    array_unshift($parents, 'input');
-    $parents[] = $id;
-    $parents[] = 'fields';
-    $parents[] = 'items';
-    $input_data = drupal_array_get_nested_value($form_state, $parents);
-    if(empty($input_data)) continue;
-
-    Logger::log($input_data);
-    $children = $group_data['children'];
-
-    foreach($input_data as $delta => $_field_value){
-      foreach($_field_value as $field_name => $value){
-        if(isset($children[$field_name])){
-          $lang = $children[$field_name];
-          $field_data[$field_name][$lang][$delta] = $value;
-        }
-      }
-    }
-
-  }
-
-  //drupal_array_set_nested_value($form_state, array('values'), $field_data);
-  $form_state['input'] += $field_data;
-  //drupal_array_set_nested_value($form_state, array('values'), $field_data);
-  return "";
-  //$form['#field_group_multiple'][$group->group_name]
-}
-
-function _field_group_multiple_pre_validate_element($element, &$form_state){
-//   $field_name = $element['#field_name'];
-//   $language = $element['#language'];
-//   Logger::log($field_name . ' => ' . $language);
-//   //Logger::log($element['#parents']);
-
-//   $id = $element['#field_group_multiple'];
-//   //Logger::log($form_state['values'][$id]);
-
-//   $field_values = array();
-//   foreach($form_state['values'][$id]['fields']['items'] as $delta => $_field_values){
-//     if(isset($_field_values[$field_name])){
-//       $field_values[$delta] = $_field_values[$field_name];
-//     }
-//   }
-
-//   drupal_array_set_nested_value($form_state, array('values', $field_name, $language), $field_values, true);
-  //Logger::log($form_state);
-}
-
-
-function _field_group_multiple_get_max_cardinality($cardinalities = array()){
-  if(empty($cardinalities)) $cardinalities = array(0);
-
-  $min_cardinality = min($cardinalities);
-  $max_cardinality = max($cardinalities);
-
-  if ($min_cardinality != $max_cardinality) {
-    $min_cardinality = FIELD_CARDINALITY_UNLIMITED;
-
-    foreach ($cardinalities as $field_name => $caridinality) {
-      if($caridinality == FIELD_CARDINALITY_UNLIMITED){
-        continue;
-      }
-
-      if($min_cardinality == FIELD_CARDINALITY_UNLIMITED || $min_cardinality > $caridinality) {
-        $min_cardinality = $caridinality;
-      }
     }
   }
-  return $min_cardinality;
 }
 
 
@@ -436,9 +344,8 @@ function _field_group_multiple_get_max_cardinality($cardinalities = array()){
  */
 function field_group_multiple_field_attach_submit($entity_type, &$entity, $form, &$form_state) {
 
-  Logger::log($form_state);
   if (isset($form['#field_group_multiple'])) {
-    //Logger::log($form_state);
+
     foreach ($form['#field_group_multiple'] as $group_name => $id) {
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
@@ -787,17 +694,28 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 function _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, &$form, &$form_state, $cardinality) {
   $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
-  $field_names = element_children($group_element['fields']['#widget']);
-
   $fields = array();
-  foreach ($field_names as $field_name) {
-    $fields[$field_name] = $group_element['fields']['#widget'][$field_name];
+  foreach($group_element['fields']['#fields'] as $field_name => $field_config){
+    $langcode = 'und';
+    $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
+    if(!$fields[$field_name]['items']){
+      $fields[$field_name]['items'] = array();
+    }
+    $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
   }
+
+  $field_names = array_keys($fields);
+
+//   $field_names = element_children($group_element['fields']['#widget']);
+//   $fields = array();
+//   foreach ($field_names as $field_name) {
+//     $fields[$field_name] = $group_element['fields']['#widget'][$field_name];
+//   }
 
   $field_values = _field_group_multiple_get_field_values($entity, $group_element['fields']['#orginal']);
 
   $field_value_count = count($field_values);
-  $items_count = $cardinality == FIELD_CARDINALITY_UNLIMITED ? 0 : $cardinality;
+  $items_count = $cardinality == FIELD_CARDINALITY_UNLIMITED ? $field_value_count : $cardinality;
 
   if (isset($form_state['field_group_multiple'][$id]['count'])) {
     $items_count = $form_state['field_group_multiple'][$id]['count'];
@@ -821,19 +739,9 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
     }
   }
 
-  $fields = array();
-  foreach($group_element['fields']['#fields'] as $field_name => $field_config){
-    $langcode = 'und';
-    $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
-    if(!$fields[$field_name]['items']){
-      $fields[$field_name]['items'] = array();
-    }
-    $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
-  }
-
   $items = array();
   for ($delta=0; $delta < $items_count; $delta++) {
-    //$field_cols = $field_values[$delta];$group_element['fields']['#fields']
+    $field_cols = $field_values[$delta];
     foreach ($fields as $field_name => $field_items) {
       $field_config = $group_element['fields']['#fields'][$field_name];
 
@@ -845,45 +753,25 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
       }
 
       $widget = _field_group_multiple_get_field_widget($field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
+      $widget['#multiple'] = false;
 
-    //foreach ($fields_cols as $field_name => $field_value) {
-      //$widget = $fields[$field_name][$delta];
-      //$widget = _field_group_multiple_build_widget_items_delta($widget, $delta, $field_value, NULL);
-      //$items[$delta][$field_name] = $widget;
+      if($group_element['fields']['#group']->format_type != 'field_group_multiple_container'){
+        $reset_title = array('#title_display' => 'invisible', '#title' => '');
+        $widget += $reset_title;
+        _field_group_multiple_array_set_values($widget, $reset_title);
+      }
       $items[$delta][$field_name] = $widget;
     }
   }
-  Logger::log($items);
   $group_element['fields']['items'] = $items;
 }
 
 
-function _field_group_multiple_build_widget_items_delta($widget, $delta,  $values, $widget_key = NULL) {
-  $new_widget = $widget;
-
-  if (_is_field_widget($widget)) {
-    $new_widget = $widget;
-    $field_name = $widget['#field_name'];
-    $new_widget['#delta'] = $delta;
-    $columns = $new_widget['#columns'];
-
-    unset($new_widget['#title'], $new_widget['#description'], $new_widget['#value']);
-    $new_widget['#multiple'] = 0;
-
-    if (isset($new_widget['#value_key']) && isset($values[$new_widget['#value_key']]) && !is_null($values[$new_widget['#value_key']])) {
-      $new_widget['#default_value'] = array($delta => $values[$new_widget['#value_key']]);
-    }
-    elseif (!is_null($widget_key) && isset($values[$widget_key]) && !is_null($values[$widget_key])) {
-      $new_widget['#default_value'] = $values[$widget_key];
-    }
+function _field_group_multiple_array_set_values(&$array, $values){
+  foreach(element_children($array) as $key){
+    $array[$key] += $values;
+    _field_group_multiple_array_set_values($array[$key], $values);
   }
-
-  $child_elements = element_children($widget);
-  foreach ($child_elements as $widget_child) {
-    $new_widget[$widget_child] = _field_group_multiple_build_widget_items_delta($widget[$widget_child], $delta,  $values, $widget_child);
-  }
-
-  return $new_widget;
 }
 
 
@@ -957,6 +845,28 @@ function _field_group_multiple_get_field_widget($field, $instance, $langcode, $i
     }
   }
   return $element;
+}
+
+function _field_group_multiple_get_max_cardinality($cardinalities = array()){
+  if(empty($cardinalities)) $cardinalities = array(0);
+
+  $min_cardinality = min($cardinalities);
+  $max_cardinality = max($cardinalities);
+
+  if ($min_cardinality != $max_cardinality) {
+    $min_cardinality = FIELD_CARDINALITY_UNLIMITED;
+
+    foreach ($cardinalities as $field_name => $caridinality) {
+      if($caridinality == FIELD_CARDINALITY_UNLIMITED){
+        continue;
+      }
+
+      if($min_cardinality == FIELD_CARDINALITY_UNLIMITED || $min_cardinality > $caridinality) {
+        $min_cardinality = $caridinality;
+      }
+    }
+  }
+  return $min_cardinality;
 }
 
 
