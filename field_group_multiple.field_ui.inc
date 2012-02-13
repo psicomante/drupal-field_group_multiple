@@ -142,7 +142,7 @@ function _field_group_multiple_default_format_summary($group) {
   $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
   $min_cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
   $info = '<em>This value depends on the shortest selected "number of values" of the grouped fields.</em>';
-  if($min_cardinality == FIELD_CARDINALITY_UNLIMITED) {
+  if ($min_cardinality == FIELD_CARDINALITY_UNLIMITED) {
     return '<div class="description">' . t('The maximal amount of items that can be added is unlimited.<br/>' . $info , array('!count' => $min_cardinality)) . '</div>';
   }
   else {
@@ -153,7 +153,7 @@ function _field_group_multiple_default_format_summary($group) {
 
 function _field_group_multiple_default_format_validate($form, &$form_state, $group) {
   $cardinalities = _field_group_multiple_get_fields_infos($group->children, 'cardinality');
-  if(!empty($cardinalities)){
+  if (!empty($cardinalities)) {
     if (min($cardinalities) != max($cardinalities)) {
       form_set_error("fields[" . $group->group_name . "][format][type]",
         t('Field cardinalities in group !group_name must be equal.', array('!group_name' => $group->group_name)));

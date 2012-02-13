@@ -11,31 +11,31 @@ function field_group_multiple_theme() {
   return array(
     'field_group_multiple_table_form' => array(
       'render element' => 'elements',
-  ),
+    ),
     'field_group_multiple_container_form' => array(
       'render element' => 'elements',
-  ),
+    ),
     'field_group_multiple_label_value_form' => array(
       'render element' => 'elements',
-  ),
+    ),
     'field_group_multiple_container' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-container',
       'pattern' => 'field-group-multiple-container__',
       'path' => $path,
-  ),
+    ),
     'field_group_multiple_label_value' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-label-value',
       'pattern' => 'field-group-multiple-label-value__',
       'path' => $path,
-  ),
+    ),
     'field_group_multiple_table' => array(
       'variables' => array('group' => NULL, 'items' => array(), 'elements' => array()),
       'template' => 'field-group-multiple-table',
       'pattern' => 'field-group-multiple-table__',
       'path' => $path,
-  ),
+    ),
   );
 }
 
@@ -153,7 +153,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     }
 
     // disable form widgets
-    foreach ($group->children as $field_name){
+    foreach ($group->children as $field_name) {
       unset($form[$field_name]);
     }
   }
@@ -257,7 +257,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       if (empty($group->children)) continue; // do nothing if no fields are grouped
 
       $id = _field_group_multiple_id($group, 'form');
-      if (empty($form['#field_group_multiple'])){
+      if (empty($form['#field_group_multiple'])) {
         $form['#field_group_multiple'] = array();
       }
 
@@ -697,10 +697,10 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
   $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
   $fields = array();
-  foreach ($group_element['fields']['#fields'] as $field_name => $field_config){
+  foreach ($group_element['fields']['#fields'] as $field_name => $field_config) {
     $langcode = 'und';
     $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
-    if (!$fields[$field_name]['items']){
+    if (!$fields[$field_name]['items']) {
       $fields[$field_name]['items'] = array();
     }
     $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
@@ -720,7 +720,7 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
   }
 
   // present at least one row value
-  if ($items_count == 0){
+  if ($items_count == 0) {
     $items_count++;
     $form_state['field_group_multiple'][$id]['count'] = $items_count;
   }
@@ -767,8 +767,8 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
 }
 
 
-function _field_group_multiple_array_set_values(&$array, $values){
-  foreach (element_children($array) as $key){
+function _field_group_multiple_array_set_values(&$array, $values) {
+  foreach (element_children($array) as $key) {
     $array[$key] += $values;
     _field_group_multiple_array_set_values($array[$key], $values);
   }
@@ -847,7 +847,7 @@ function _field_group_multiple_get_field_widget($field, $instance, $langcode, $i
   return $element;
 }
 
-function _field_group_multiple_get_max_cardinality($cardinalities = array()){
+function _field_group_multiple_get_max_cardinality($cardinalities = array()) {
   if (empty($cardinalities)) $cardinalities = array(0);
 
   $min_cardinality = min($cardinalities);
@@ -857,7 +857,7 @@ function _field_group_multiple_get_max_cardinality($cardinalities = array()){
     $min_cardinality = FIELD_CARDINALITY_UNLIMITED;
 
     foreach ($cardinalities as $field_name => $caridinality) {
-      if ($caridinality == FIELD_CARDINALITY_UNLIMITED){
+      if ($caridinality == FIELD_CARDINALITY_UNLIMITED) {
         continue;
       }
 
@@ -897,7 +897,7 @@ function &_field_group_multiple_get_group_wrapper($id, &$form) {
   return $form[$id];
 }
 
-function _template_field_group_multiple_suggestions($suggestions_prefix, $group){
+function _template_field_group_multiple_suggestions($suggestions_prefix, $group) {
   $theme_hook_suggestions = array();
   $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->group_name;
   $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->entity_type;
