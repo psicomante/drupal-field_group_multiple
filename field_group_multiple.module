@@ -159,7 +159,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
   }
   else {
     // some display mode
-
+    // form contains the entity
     $elements = array();
     $array_transposed = array();
     $field_not_in_elements = array();
@@ -167,8 +167,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     if (empty($group->children)) return; // do nothing if no fields are grouped
 
     foreach ($group->children as $field_name) {
-
-      if(!isset($element[$field_name])) {
+      if (!isset($element[$field_name])) {
         $field_not_in_elements[] = $field_name;
         continue;
       }
@@ -187,7 +186,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       foreach ($field['#items'] as $delta => $value) {
         $_res = $function($value, $info);
         if (!$_res) {
-          // correct items mapping
+          // correct items mapping, if neccasary ... I think this is depracted since alpha1
           if ($is_delta) {
             $field_value = $field[$delta];
           }
@@ -204,20 +203,21 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       unset($element[$field_name]); // remove processed element
     }
 
-    if(!empty($field_not_in_elements)){
-      //drupal_set_message("Field group multiple error" . implode(", ",$field_not_in_elements),'error');
+    if (!empty($field_not_in_elements)) {
+      watchdog(FIELD_GROUP_MULTIPLE, 'Field(s) %fields are not present in pass-through variable element from field_group_pre_render.', array('%fields' => implode(", ",$field_not_in_elements)), WATCHDOG_ERROR);
     }
 
-    if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
-      $format_type = $group->format_settings['instance_settings']['parent_format_type'];
-      if (!empty($format_type)) {
-        $parent_group = clone $group;
-        $parent_group->format_type = $format_type;
-        field_group_field_group_pre_render($element, $parent_group, $form);
+    if (!empty($array_transposed)) {
+
+      if (isset($group->format_settings['instance_settings']['parent_format_type'])) {
+        $format_type = $group->format_settings['instance_settings']['parent_format_type'];
+        if (!empty($format_type)) {
+          $parent_group = clone $group;
+          $parent_group->format_type = $format_type;
+          field_group_field_group_pre_render($element, $parent_group, $form);
+        }
       }
-    }
 
-    if(!empty($array_transposed)) {
       $element['#weight'] = $group->weight;
       $element['items'] = array(
         '#theme' => $group->format_type,
