@@ -200,6 +200,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
           $array_transposed[$delta][$field_name] = NULL;
         }
       }
+      $elements[$field_name] = $element[$field_name]; 
       unset($element[$field_name]); // remove processed element
     }
 
