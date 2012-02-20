@@ -200,7 +200,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
           $array_transposed[$delta][$field_name] = NULL;
         }
       }
-      $elements[$field_name] = $element[$field_name]; 
+      $elements[$field_name] = $element[$field_name];
       unset($element[$field_name]); // remove processed element
     }
 
@@ -626,12 +626,23 @@ function template_preprocess_field_group_multiple_container(&$variables) {
   foreach (element_children($items) as $delta) {
     $entry = array();
     foreach (element_children($items[$delta]) as $field_name) {
-      $entry[$field_name] = $elements[$field_name];
-      $entry[$field_name]['#items'][0] = $entry[$field_name][0] = $items[$delta][$field_name];
+      if (isset($elements[$field_name])) {
+        $entry[$field_name] = $elements[$field_name];
+        $entry[$field_name]['#items'][0] = $entry[$field_name][0] = $items[$delta][$field_name];
+      }
     }
-    $entries[$delta] = $entry;
+    if (!empty($entry)) {
+      $entries[$delta] = $entry;
+    }
   }
+
   $variables['entries'] = $entries;
+  if (empty($entries)) {
+    $variables['is_empty'] = true;
+  }
+  else {
+    $variables['is_empty'] = false;
+  }
 
   if (empty($variables['theme_hook_suggestions'])) $variables['theme_hook_suggestions'] = array();
 
@@ -650,23 +661,33 @@ function template_preprocess_field_group_multiple_label_value(&$variables) {
   $label_field = $group->format_settings['instance_settings']['label_value_field'];
   $value_field = array_shift(array_diff($group->children, array($label_field)));
 
-  $tmp_entry = $elements[$value_field];
-  unset($tmp_entry['#items']);
-  // unset other children
-  foreach (element_children($tmp_entry) as $nr) {
-    unset($tmp_entry[$nr]);
-  }
-
   $entries = array();
-  foreach (element_children($items) as $delta) {
-    $values = $items[$delta];
-    $entry = $tmp_entry;
-    $entry['#title'] = $values[$label_field]['#markup'];
-    $entry['#items'][0] = $entry[0] = $values[$value_field];
-    $entries[$delta] = $entry;
+
+  if (isset($elements[$value_field])) {
+
+    $tmp_entry = $elements[$value_field];
+    unset($tmp_entry['#items']);
+    // unset other children
+    foreach (element_children($tmp_entry) as $nr) {
+      unset($tmp_entry[$nr]);
+    }
+
+    foreach (element_children($items) as $delta) {
+      $values = $items[$delta];
+      $entry = $tmp_entry;
+      $entry['#title'] = $values[$label_field]['#markup'];
+      $entry['#items'][0] = $entry[0] = $values[$value_field];
+      $entries[$delta] = $entry;
+    }
   }
   $variables['entries'] = $entries;
-
+  if (empty($entries)) {
+    $variables['is_empty'] = true;
+  }
+  else {
+    $variables['is_empty'] = false;
+  }
+  
   $suggestions_prefix = "field_group_multiple_label_value";
   $variables['theme_hook_suggestions'] = _template_field_group_multiple_suggestions($suggestions_prefix, $group);
 }
