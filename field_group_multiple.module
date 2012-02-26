@@ -164,6 +164,9 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     $array_transposed = array();
     $field_not_in_elements = array();
 
+//     Logger::log($element);
+//     Logger::log($group);
+    
     if (empty($group->children)) return; // do nothing if no fields are grouped
 
     foreach ($group->children as $field_name) {
@@ -172,8 +175,8 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         continue;
       }
 
-      $field =  $element[$field_name];
-      $element[$field_name] = $field;
+      $field = $element[$field_name];
+      //$element[$field_name] = $field;
 
       $info = field_info_field($field_name);
       $function = $info['module'] . '_field_is_empty';
