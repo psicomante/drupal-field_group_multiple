@@ -173,8 +173,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         continue;
       }
 
-      $field =  $element[$field_name];
-      $element[$field_name] = $field;
+      $field = $element[$field_name];
 
       $info = field_info_field($field_name);
       $function = $info['module'] . '_field_is_empty';
@@ -264,7 +263,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   $bundle = $form['#bundle'];
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
   if (!empty($groups)) {
-
+    dsm($form);
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
@@ -764,7 +763,8 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
         $field_items[$delta] = $fields[$field_name]['default'];
       }
 
-      $widget = _field_group_multiple_get_field_widget($field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
+      // TODO correct language code !!!
+      $widget = _field_group_multiple_handle_field_widget($field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
       // reset multiple functionality (for multiple selection)
       $widget['#multiple'] = FALSE;
 
@@ -778,6 +778,57 @@ function _field_group_multiple_build_transposed_widget_items($id, $entity_type, 
     }
   }
   $group_element['fields']['items'] = $items;
+}
+
+
+function _field_group_multiple_handle_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state){
+  $field_type = $field['type'];
+  $type_callback = __FUNCTION__ . '_type_' . $field_type;
+  if(function_exists($type_callback)){
+    $widget = $type_callback($field, $instance, $langcode, $items, $delta, $form, $form_state);    
+  }else{
+    // default process    
+    $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state);    
+    // reset multiple functionality (for multiple selection)    
+  }
+  $widget['#multiple'] = FALSE;
+  
+  return $widget;
+  
+}
+
+function _field_group_multiple_handle_field_widget_type_file($field, $instance, $langcode, $items, $delta, $form, $form_state){
+
+  $defaults = array(
+      'fid' => 0,
+      'display' => !empty($field['settings']['display_default']),
+      'description' => '',
+  );
+  
+  $form_state['programmed'] = true; // disable second addmore
+
+  $field['cardinality'] = 1;
+  $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state);
+  dsm($widget);
+  $field_state = field_form_get_state($widget['#field_parents'], $field['field_name'], $langcode, $form_state);
+  if (isset($field_state['items'])) {
+    $items = $field_state['items'];
+  }
+  dsm($items);
+  foreach(element_children($widget) as $id){
+    if(!isset($items[$id])){
+      // reset value
+      $widget[$id]['#default_value'] = $defaults;
+    }
+  }
+  
+  
+  
+  
+  
+  
+  //$widget = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+  return $widget;
 }
 
 
@@ -829,7 +880,10 @@ function _field_group_multiple_get_field_widget($field, $instance, $langcode, $i
   $field_name = $field['field_name'];
   $parents = $form['#parents'];
   //$delta = isset($get_delta) ? $get_delta : 0;
-
+  
+  // fake cardinality
+  //$field['cardinality'] = 1;
+  
   $function = $instance['widget']['module'] . '_field_widget_form';
   if (function_exists($function)) {
     $element = array(
