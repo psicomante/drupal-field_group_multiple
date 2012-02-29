@@ -34,8 +34,6 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
     $items[0] = $tmp;
   }
 
-  Logger::log($delta);
-  Logger::log($items);
   // Essentially we use the managed_file type, extended with some enhancements.
   $element_info = element_info('managed_file');
   $element += array(
@@ -103,93 +101,65 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
     // FIELD GROUP MULTIPLE: modification 0 => $delta
     // $elements['#file_upload_description'] = theme('file_upload_help', array('description' => '', 'upload_validators' => $elements[0]['#upload_validators']));
     $elements['#file_upload_description'] = theme('file_upload_help', array('description' => '', 'upload_validators' => $elements[$delta]['#upload_validators']));
-    }
-
-    return $elements;
   }
 
-  function field_group_multiple_file_field_widget_process($element, &$form_state, $form){
-    $prefix = $element['#prefix'];
-    $suffix = $element['#suffix'];
+  return $elements;
+}
 
-    $backup_ajax = array();
-    foreach (element_children($element) as $key) {
-      if (isset($element[$key]['#ajax'])) {
-        $backup_ajax[$key]['#ajax']['path'] = $element[$key]['#ajax']['path'];
-        $backup_ajax[$key]['#ajax']['wrapper'] = $element[$key]['#ajax']['wrapper'];
-      }
+function field_group_multiple_file_field_widget_process($element, &$form_state, $form){
+  $prefix = $element['#prefix'];
+  $suffix = $element['#suffix'];
+
+  $backup_ajax = array();
+  foreach (element_children($element) as $key) {
+    if (isset($element[$key]['#ajax'])) {
+      $backup_ajax[$key]['#ajax']['path'] = $element[$key]['#ajax']['path'];
+      $backup_ajax[$key]['#ajax']['wrapper'] = $element[$key]['#ajax']['wrapper'];
     }
-
-    $element = file_field_widget_process($element, $form_state, $form);
-
-    // hack for cardinality check
-    foreach(element_children($element) as $key){
-      if (isset($backup_ajax[$key]['#ajax'])) {
-        $element[$key]['#ajax']['path'] = $backup_ajax[$key]['#ajax']['path'];
-        $element[$key]['#ajax']['wrapper'] = $backup_ajax[$key]['#ajax']['wrapper'];
-      }
-    }
-
-    // restore prefix and suffix
-    // Prefix and suffix used for Ajax replacement.
-    $element['#prefix'] = $prefix;
-    $element['#suffix'] = $suffix;
-
-    return $element;
   }
 
+  $element = file_field_widget_process($element, $form_state, $form);
 
-  function field_group_multiple_process_field_file_submit(&$values, $field_name, $langcode, $field_info, $form_values){
-    Logger::log("");
-    $function = $field_info['module'] . '_field_is_empty';
+  // hack for cardinality check
+  foreach(element_children($element) as $key){
+    if (isset($backup_ajax[$key]['#ajax'])) {
+      $element[$key]['#ajax']['path'] = $backup_ajax[$key]['#ajax']['path'];
+      $element[$key]['#ajax']['wrapper'] = $backup_ajax[$key]['#ajax']['wrapper'];
+    }
+  }
 
-    foreach ($form_values as $delta => $value) {
-      if (isset($value[$field_name])) {
+  // restore prefix and suffix
+  // Prefix and suffix used for Ajax replacement.
+  $element['#prefix'] = $prefix;
+  $element['#suffix'] = $suffix;
 
-        if (isset($value[$field_name]['0'])) {
-          // composite value
-          $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
-          $values[$field_name]['values'][$langcode][$delta] = $value[$field_name]['0'];
+  return $element;
+}
+
+
+function field_group_multiple_process_field_file_submit(&$values, $field_name, $langcode, $field_info, $form_values){
+
+  $function = $field_info['module'] . '_field_is_empty';
+
+  foreach ($form_values as $delta => $value) {
+    if (isset($value[$field_name])) {
+
+      if (isset($value[$field_name]['0'])) {
+        // composite value
+
+        $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
+        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name]['0'];
+        if($values[$field_name]['empty'][$delta]){
+          $values[$field_name]['values'][$langcode][$delta] = null;
         }
-        //       else{
-        //         // single value
-        //         $value_key = array_pop($columns);
-        //         $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
-        //         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
-        //       }
+
       }
+      //       else{
+      //         // single value
+      //         $value_key = array_pop($columns);
+      //         $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
+      //         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
+      //       }
     }
   }
-
-  /*
-   function _field_group_multiple_handle_field_widget_type_file($group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state){
-
-  $defaults = array(
-  'fid' => 0,
-  'display' => !empty($field['settings']['display_default']),
-  'description' => '',
-  );
-
-  $form_state['programmed'] = true; // disable second addmore
-
-  //$field['cardinality'] = 1; // fake cardinality
-
-  $widget = _field_group_multiple_get_field_widget($group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state);
-
-  dsm($widget);
-  $field_state = field_form_get_state($widget[$delta]['#field_parents'], $field['field_name'], $langcode, $form_state);
-  if (isset($field_state['items'])) {
-  $items = $field_state['items'];
-  }
-
-  foreach(element_children($widget) as $id){
-  if(!isset($items[$id])){
-  // reset value
-  $widget[$id]['#default_value'] = $defaults;
-  }
-  }
-
-  //$widget = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
-  return $widget;
-  }
-  */
+}

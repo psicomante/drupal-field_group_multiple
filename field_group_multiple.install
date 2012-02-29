@@ -19,3 +19,9 @@ function field_group_multiple_install() {
     ->condition('name', 'field_group_multiple')
     ->execute();
 }
+
+
+// function field_group_multiple_schema(){
+//   // TODO schema for mappings
+//   // field delta to real
+// }
