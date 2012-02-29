@@ -263,7 +263,6 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
   $bundle = $form['#bundle'];
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
   if (!empty($groups)) {
-    dsm($form);
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
@@ -273,6 +272,8 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       if (empty($form['#field_group_multiple'])) {
         $form['#field_group_multiple'] = array();
       }
+
+      $group_field_parents = array(FIELD_GROUP_MULTIPLE, $id);
 
       $form['#field_group_multiple'][$group->group_name] = $id;
 
@@ -314,12 +315,24 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
         $langcode = $form[$field_name]['#language'];
         $form_state['field_group_multiple'][$id]['children'][$field_name] = $langcode;
 
-        $field_state = field_form_get_state($form_state['field_group_multiple'][$id]['parents'], $field_name, $langcode, $form_state);
+        //$parents = $form_state['field_group_multiple'][$id]['parents'];
+        $field_parents = array();
+        if(isset($form[$field_name][$langcode]['#field_parents'])){
+          $field_parents = $form[$field_name][$langcode]['#field_parents'];
+        }
+
+        $field_state = field_form_get_state($form[$field_name][$langcode]['#field_parents'], $field_name, $langcode, $form_state);
         $field = $field_state['field'];
         $instance = $field_state['instance'];
         $cardinalities[$field_name] = $field['cardinality'];
 
-        // TODO check field access!!
+        // modify field state for this group cardinality
+        // create a new field state for the field embedded in the group
+        //  $field_state['field']['cardinality_real'] = $cardinalities[$field_name];
+        //  $field_state['field']['cardinality'] = 1;
+        field_form_set_state($group_field_parents, $field_name, $langcode, $form_state, $field_state);
+
+        // TODO check field access!! is checked by field_group???
         $group_element['fields']['#orginal'][$field_name] = $form[$field_name];
         $group_element['fields']['#fields'][$field_name] = $field_state;
 
@@ -332,9 +345,8 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
       $form_state['field_group_multiple'][$id]['cardinality'] = $cardinality;
 
-      //$add_more_enable = false;
+
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED) {
-        //$add_more_enable = true;
         $group_element['add-more'] = array(
           '#type' => 'submit',
           '#name' => strtr($id, '-', '_') . '_add_more',
@@ -367,39 +379,19 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
       if (!isset($group_element['#parents'])) $group_element['#parents'] = array($id);
       $parents = array_merge($group_element['#parents'], array("fields" , "items") );
       $form_values = drupal_array_get_nested_value($form_state['values'], $parents);
+      Logger::log($form_values);
       $items_count = count($form_values);
 
       $values = array();
       foreach ($group_element['fields']['#orginal'] as $field_name => $field_data) {
         $entity->{$field_name} = array();
-
-        $langcode = $field_data['#language'];
-        // mark empty fields
-        $info = field_info_field($field_name);
-        $columns = array_keys($info['columns']);
-        $function = $info['module'] . '_field_is_empty';
-
-        foreach ($form_values as $delta => $value) {
-          if (isset($value[$field_name])) {
-
-            if (isset($value[$field_name]['0'])) {
-              // composite value
-              $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $info);
-              $values[$field_name]['values'][$langcode][$delta] = $value[$field_name][0];
-            }
-            else{
-              // single value
-              $value_key = array_pop($columns);
-              $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
-              $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
-            }
-          }
-        }
+        field_group_multiple_process_field_submit($values, $field_name, $field_data, $form_values);
       }
 
+      Logger::log($values);
       for ($i=0; $i < $items_count ; $i++) {
         $is_empty = TRUE;
-
+        
         foreach ($values as $field_name => $field_values) {
           if (!$field_values['empty'][$i]) {
             $is_empty = FALSE;
@@ -409,13 +401,329 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 
         if (!$is_empty) {
           foreach ($values as $field_name => $field_values) {
-            $langcode = key($field_values['values']);
-            $entity->{$field_name}[$langcode][] = $field_values['values'][$langcode][$i];
+            $langcode = key($field_values['values']);            
+            $entity->{$field_name}[$langcode][$i] = $field_values['values'][$langcode][$i];
           }
         }
       }
     }
   }
+  
+}
+
+function field_group_multiple_process_field_submit(&$values, $field_name, $field_data, $form_values){
+  // mark empty fields
+  $field_info = field_info_field($field_name);
+  $langcode = $field_data['#language'];
+  $module = $field_info['module'];
+  
+  $extension_exists = field_group_multiple_include($module, 'fields');
+  $function = FIELD_GROUP_MULTIPLE . '_process_field_' . $module . '_submit';
+  if(module_exists($module) && $extension_exists && function_exists($function)){
+    $function($values, $field_name, $langcode, $field_info, $form_values);
+  }else{
+    field_group_multiple_process_field_default_submit($values, $field_name, $langcode, $field_info, $form_values);
+  }
+}
+
+
+function field_group_multiple_process_field_default_submit(&$values, $field_name, $langcode, $field_info, $form_values){
+  Logger::log("");
+  $function = $field_info['module'] . '_field_is_empty';
+  //$columns = array_keys($info['columns']);
+  
+  foreach ($form_values as $delta => $value) {
+    if (isset($value[$field_name])) {
+
+      if (isset($value[$field_name]['0'])) {
+        // composite value
+        $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
+        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name][0];
+      }
+      else{
+        // single value
+        //$value_key = array_pop($columns);
+        $values[$field_name]['empty'][$delta] = $function($value[$field_name], $field_info);
+        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
+      }
+    }
+  }
+}
+
+
+
+
+function _field_group_multiple_build_transposed_widget_items($group_id, $entity_type, $entity, &$form, &$form_state, $cardinality) {
+  $group_element =& _field_group_multiple_get_group_wrapper($group_id, $form);
+
+  $fields = array();
+  foreach ($group_element['fields']['#fields'] as $field_name => $field_config) {
+    $langcode = 'und';
+    // TODO check if this is nessacery
+    $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
+    if (!$fields[$field_name]['items']) {
+      $fields[$field_name]['items'] = array();
+    }
+    $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
+  }
+
+  $field_names = array_keys($fields);
+
+  $form_values = drupal_array_get_nested_value($form_state, array('values',$group_id,'fields','items'));  
+  $field_values = _field_group_multiple_get_field_values($entity, $group_element['fields']['#orginal'], $form_values);
+
+  $field_value_count = count($field_values);
+  $items_count = $cardinality == FIELD_CARDINALITY_UNLIMITED ? $field_value_count : $cardinality;
+
+  if (isset($form_state[FIELD_GROUP_MULTIPLE][$group_id]['count'])) {
+    $items_count = $form_state['field_group_multiple'][$group_id]['count'];
+  }
+  else{
+    $form_state[FIELD_GROUP_MULTIPLE][$group_id]['count'] = $items_count;
+  }
+
+  // present at least one row value
+  if ($items_count == 0) {
+    $items_count++;
+    $form_state[FIELD_GROUP_MULTIPLE][$group_id]['count'] = $items_count;
+  }
+
+  // add empty rows
+  if (($c_diff = abs($items_count - $field_value_count)) > 0) {
+    for ($i=0; $i < $c_diff; $i++) {
+      $data = array();
+      foreach ($field_names as $field_name) {
+        $data[$field_name] = NULL;
+      }
+      $field_values[] = $data;
+    }
+  }
+
+  
+  $items = array();
+  for ($delta=0; $delta < $items_count; $delta++) {
+    $field_cols = $field_values[$delta];
+    foreach ($fields as $field_name => $field_items) {
+      $field_config = $group_element['fields']['#fields'][$field_name];
+
+      $field_items = array();
+      //if (isset($fields[$field_name]['items'][$delta])) {
+      //  $field_items[$delta] = $fields[$field_name]['items'][$delta];
+      if (isset($field_cols[$field_name])) {
+        $field_items[$delta] = $field_cols[$field_name];
+      }
+      else {
+        $field_items[$delta] = $fields[$field_name]['default'];
+      }
+
+      // TODO correct language code !!!
+      $widget = _field_group_multiple_handle_field_widget($group_id, $field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
+
+      // reset multiple functionality (for multiple selection)
+      $widget['#multiple'] = FALSE;
+
+      // reset title in table display
+      if ($group_element['fields']['#group']->format_type != 'field_group_multiple_container') {
+        $reset_title = array('#title_display' => 'invisible', '#title' => '');
+        $widget += $reset_title;
+        _field_group_multiple_array_set_values($widget, $reset_title);
+      }
+      $items[$delta][$field_name] = $widget;
+    }
+  }
+  $group_element['fields']['items'] = $items;
+}
+
+
+function _field_group_multiple_handle_field_widget($group_id,$field, $instance, $langcode, $items, $delta, $form, &$form_state){
+  $module = $instance['widget']['module'];
+  $extension_exists = field_group_multiple_include($module, 'fields');
+  $function_callback = FIELD_GROUP_MULTIPLE . '_' . $module . '_field_widget_form';
+  //ctools_form_include($form_state, $file);
+  if (module_exists($module) && $extension_exists && function_exists($function_callback)) {
+    form_load_include($form_state, 'inc', FIELD_GROUP_MULTIPLE, '/fields/' . $module);
+    $widget = _field_group_multiple_process_field_widget_form($function_callback, $group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state);
+  }
+  else{
+    // default process
+    $function = $instance['widget']['module'] . '_field_widget_form';
+    $widget = _field_group_multiple_process_field_widget_form($function, $group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state);
+  }
+  $widget['#multiple'] = FALSE;
+
+  return $widget;
+
+}
+
+
+
+function _field_group_multiple_array_set_values(&$array, $values) {
+  foreach (element_children($array) as $key) {
+    $array[$key] += $values;
+    _field_group_multiple_array_set_values($array[$key], $values);
+  }
+}
+
+
+
+function _field_group_multiple_get_field_values($entity, $fields, $form_values = array()) {
+
+  $values = array();
+  $max_items = 0;
+
+  foreach ($fields as $field_name => $field) {
+    $language = $field['#language'];
+    if (isset($entity->{$field_name}[$language])) {
+      $count = count($entity->{$field_name}[$language]);
+      if ($max_items < $count) {
+        $max_items = $count;
+      }
+    }
+  }
+
+  for ($i=0; $i < $max_items; $i++) {
+    foreach ($fields as $field_name => $field) {
+      $language = $field['#language'];
+
+      if(isset($form_values[$i][$field_name])){
+        $values[$i][$field_name] = $form_values[$i][$field_name];
+      } else {
+        if (isset($entity->{$field_name}[$language][$i])) {
+          $values[$i][$field_name] =  $entity->{$field_name}[$language][$i];
+        }
+        else {
+          $values[$i][$field_name] =  NULL;
+        }
+      }
+    }
+  }
+
+  return $values;
+}
+
+/**
+ * Snippet from field_multiple_value_form
+ */
+function _field_group_multiple_process_field_widget_form($function, $group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state) {
+  $element = array();
+  if (function_exists($function)) {
+    $element = _field_group_multiple_field_widget_form_base_element($group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state);
+    $element = $function($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+    _field_group_multiple_field_widget_form_alter($element, $field, $instance, $langcode, $items, $delta, $form, $form_state);
+  }
+  return $element;
+}
+
+
+function _field_group_multiple_field_widget_form_base_element($group_id, $field, $instance, $langcode, $items, $delta, $form, $form_state){
+  $field_name = $field['field_name'];
+  $field_parents = array(FIELD_GROUP_MULTIPLE, $group_id);
+
+  $element = array(
+        '#entity_type' => $instance['entity_type'],
+        '#bundle' => $instance['bundle'],
+        '#field_name' => $field_name,
+        '#language' => $langcode,
+        '#field_parents' => $field_parents,
+        '#columns' => array_keys($field['columns']),
+        '#title' => check_plain($instance['label']),
+        '#description' => field_filter_xss($instance['description']),
+  // Only the first widget should be required.
+    '#required' => $delta == 0 && $instance['required'],
+    '#delta' => $delta,
+  );
+
+  return $element;
+}
+
+function _field_group_multiple_field_widget_form_alter(&$element, $field, $instance, $langcode, $items, $delta, $form, $form_state){
+  if ($element) {
+    // Allow modules to alter the field widget form element.
+    $context = array(
+          'form' => $form,
+          'field' => $field,
+          'instance' => $instance,
+          'langcode' => $langcode,
+          'items' => $items,
+          'delta' => $delta,
+    );
+    drupal_alter(array('field_widget_form', 'field_widget_' . $instance['widget']['type'] . '_form'), $element, $form_state, $context);
+  }
+}
+
+
+function _field_group_multiple_get_max_cardinality($cardinalities = array()) {
+  if (empty($cardinalities)) $cardinalities = array(0);
+
+  $min_cardinality = min($cardinalities);
+  $max_cardinality = max($cardinalities);
+
+  if ($min_cardinality != $max_cardinality) {
+    $min_cardinality = FIELD_CARDINALITY_UNLIMITED;
+
+    foreach ($cardinalities as $field_name => $caridinality) {
+      if ($caridinality == FIELD_CARDINALITY_UNLIMITED) {
+        continue;
+      }
+
+      if ($min_cardinality == FIELD_CARDINALITY_UNLIMITED || $min_cardinality > $caridinality) {
+        $min_cardinality = $caridinality;
+      }
+    }
+  }
+  return $min_cardinality;
+}
+
+
+function _is_field_group_multiple($type) {
+  return preg_match('/^' . FIELD_GROUP_MULTIPLE . '/', $type);
+}
+
+function _is_field_widget($widget) {
+  return isset($widget['#entity_type']) && isset($widget['#bundle']) && isset($widget['#field_name']) && isset($widget['#language']) && isset($widget['#type']);
+}
+
+
+function _field_group_multiple_field_ui_group_function($group, $suffix = NULL) {
+  if (_is_field_group_multiple($group->format_type) && !empty($suffix)) {
+    module_load_include("inc", FIELD_GROUP_MULTIPLE, FIELD_GROUP_MULTIPLE . '.field_ui');
+    $function = '_' . $group->format_type . '_' . $suffix;
+    if (function_exists($function)) {
+      return $function($group);
+    }
+  }
+}
+
+function _field_group_multiple_id($group, $mode) {
+  return 'fgm_' . $group->entity_type . '_' . $group->bundle . '_' . $mode . '_' . $group->group_name;
+}
+
+function &_field_group_multiple_get_group_wrapper($id, &$form) {
+  return $form[$id];
+}
+
+
+function field_group_multiple_include($file, $dir = 'fields') {
+  static $used = array();
+
+  $dir = '/' . ($dir ? $dir . '/' : '');
+
+  if (!isset($used[$dir][$file])) {
+    $path = DRUPAL_ROOT . '/' . drupal_get_path('module', FIELD_GROUP_MULTIPLE) . "$dir$file.inc";
+    if(file_exists($path)){
+      require_once $path;
+      $used[$dir][$file] = TRUE;
+      return TRUE;
+    }else{
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+function field_group_multiple_form_include(&$form_state, $file, $module = 'ctools', $dir = 'includes') {
+  $dir = '/' . ($dir ? $dir . '/' : '');
+  form_load_include($form_state, 'inc', $module, $dir . $file);
 }
 
 
@@ -442,6 +750,7 @@ function theme_field_group_multiple_container_form($variables) {
   ),
   );
 
+  Logger::log($items);
   foreach (element_children($items) as $delta) {
     $field_data = $items[$delta];
     $entry = array(
@@ -461,12 +770,12 @@ function theme_field_group_multiple_container_form($variables) {
     foreach (element_children($field_data) as $field_name) {
       $data = $field_data[$field_name];
 
-      $container = $orginal_fields[$field_name];
-      $language = $container['#language'];
-      $field_definition = $container[$language];
+      //       $container = $orginal_fields[$field_name];
+      //       $language = $container['#language'];
+      //       $field_definition = $container[$language];
 
-      $data['#title'] = $field_definition['#title'];
-      $data['#description'] = $field_definition['#description'];
+      //       $data['#title'] = $field_definition['#title'];
+      //       $data['#description'] = $field_definition['#description'];
 
       $elem = array(
         '#type' => 'container',
@@ -561,6 +870,7 @@ function theme_field_group_multiple_table_form($variables) {
   $items = $element['items'];
   $group = $element['#group'];
   $id = $element['#id'];
+
 
   $header = array();
   $rows = array();
@@ -706,264 +1016,6 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 }
 
 
-function _field_group_multiple_build_transposed_widget_items($id, $entity_type, $entity, &$form, &$form_state, $cardinality) {
-  $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
-
-  $fields = array();
-  foreach ($group_element['fields']['#fields'] as $field_name => $field_config) {
-    $langcode = 'und';
-    $fields[$field_name]['items']  = field_get_items($entity_type, $entity, $field_name, $langcode);
-    if (!$fields[$field_name]['items']) {
-      $fields[$field_name]['items'] = array();
-    }
-    $fields[$field_name]['default'] = field_get_default_value($entity_type, $entity, $field_config['field'], $field_config['instance'], $langcode);
-  }
-
-  $field_names = array_keys($fields);
-  $field_values = _field_group_multiple_get_field_values($entity, $group_element['fields']['#orginal']);
-
-  $field_value_count = count($field_values);
-  $items_count = $cardinality == FIELD_CARDINALITY_UNLIMITED ? $field_value_count : $cardinality;
-
-  if (isset($form_state['field_group_multiple'][$id]['count'])) {
-    $items_count = $form_state['field_group_multiple'][$id]['count'];
-  }
-  else{
-    $form_state['field_group_multiple'][$id]['count'] = $items_count;
-  }
-
-  // present at least one row value
-  if ($items_count == 0) {
-    $items_count++;
-    $form_state['field_group_multiple'][$id]['count'] = $items_count;
-  }
-
-  // add empty rows
-  if (($c_diff = abs($items_count - $field_value_count)) > 0) {
-    for ($i=0; $i < $c_diff; $i++) {
-      $data = array();
-      foreach ($field_names as $field_name) {
-        $data[$field_name] = NULL;
-      }
-      $field_values[] = $data;
-    }
-  }
-
-  $items = array();
-  for ($delta=0; $delta < $items_count; $delta++) {
-    $field_cols = $field_values[$delta];
-    foreach ($fields as $field_name => $field_items) {
-      $field_config = $group_element['fields']['#fields'][$field_name];
-
-      $field_items = array();
-      if (isset($fields[$field_name]['items'][$delta])) {
-        $field_items[$delta] = $fields[$field_name]['items'][$delta];
-      }
-      else {
-        $field_items[$delta] = $fields[$field_name]['default'];
-      }
-
-      // TODO correct language code !!!
-      $widget = _field_group_multiple_handle_field_widget($field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
-      // reset multiple functionality (for multiple selection)
-      $widget['#multiple'] = FALSE;
-
-      // reset title in table display
-      if ($group_element['fields']['#group']->format_type != 'field_group_multiple_container') {
-        $reset_title = array('#title_display' => 'invisible', '#title' => '');
-        $widget += $reset_title;
-        _field_group_multiple_array_set_values($widget, $reset_title);
-      }
-      $items[$delta][$field_name] = $widget;
-    }
-  }
-  $group_element['fields']['items'] = $items;
-}
-
-
-function _field_group_multiple_handle_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state){
-  $field_type = $field['type'];
-  $type_callback = __FUNCTION__ . '_type_' . $field_type;
-  if(function_exists($type_callback)){
-    $widget = $type_callback($field, $instance, $langcode, $items, $delta, $form, $form_state);    
-  }else{
-    // default process    
-    $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state);    
-    // reset multiple functionality (for multiple selection)    
-  }
-  $widget['#multiple'] = FALSE;
-  
-  return $widget;
-  
-}
-
-function _field_group_multiple_handle_field_widget_type_file($field, $instance, $langcode, $items, $delta, $form, $form_state){
-
-  $defaults = array(
-      'fid' => 0,
-      'display' => !empty($field['settings']['display_default']),
-      'description' => '',
-  );
-  
-  $form_state['programmed'] = true; // disable second addmore
-
-  $field['cardinality'] = 1;
-  $widget = _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state);
-  dsm($widget);
-  $field_state = field_form_get_state($widget['#field_parents'], $field['field_name'], $langcode, $form_state);
-  if (isset($field_state['items'])) {
-    $items = $field_state['items'];
-  }
-  dsm($items);
-  foreach(element_children($widget) as $id){
-    if(!isset($items[$id])){
-      // reset value
-      $widget[$id]['#default_value'] = $defaults;
-    }
-  }
-  
-  
-  
-  
-  
-  
-  //$widget = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
-  return $widget;
-}
-
-
-function _field_group_multiple_array_set_values(&$array, $values) {
-  foreach (element_children($array) as $key) {
-    $array[$key] += $values;
-    _field_group_multiple_array_set_values($array[$key], $values);
-  }
-}
-
-
-
-function _field_group_multiple_get_field_values($entity, $fields) {
-
-  $values = array();
-  $max_items = 0;
-
-  foreach ($fields as $field_name => $field) {
-    $language = $field['#language'];
-    if (isset($entity->{$field_name}[$language])) {
-      $count = count($entity->{$field_name}[$language]);
-      if ($max_items < $count) {
-        $max_items = $count;
-      }
-    }
-  }
-
-  for ($i=0; $i < $max_items; $i++) {
-    foreach ($fields as $field_name => $field) {
-      $language = $field['#language'];
-
-      if (isset($entity->{$field_name}[$language][$i])) {
-        $values[$i][$field_name] =  $entity->{$field_name}[$language][$i];
-      }
-      else {
-        $values[$i][$field_name] =  NULL;
-      }
-    }
-  }
-
-  return $values;
-}
-
-/**
- * Snippet from field_multiple_value_form
- */
-function _field_group_multiple_get_field_widget($field, $instance, $langcode, $items, $delta, $form, $form_state) {
-  $element = NULL;
-  $field_name = $field['field_name'];
-  $parents = $form['#parents'];
-  //$delta = isset($get_delta) ? $get_delta : 0;
-  
-  // fake cardinality
-  //$field['cardinality'] = 1;
-  
-  $function = $instance['widget']['module'] . '_field_widget_form';
-  if (function_exists($function)) {
-    $element = array(
-      '#entity_type' => $instance['entity_type'],
-      '#bundle' => $instance['bundle'],
-      '#field_name' => $field_name,
-      '#language' => $langcode,
-      '#field_parents' => $parents,
-      '#columns' => array_keys($field['columns']),
-      '#title' => check_plain($instance['label']),
-      '#description' => field_filter_xss($instance['description']),
-    // Only the first widget should be required.
-      '#required' => $delta == 0 && $instance['required'],
-      '#delta' => $delta,
-    );
-    if ($element = $function($form, $form_state, $field, $instance, $langcode, $items, $delta, $element)) {
-      // Allow modules to alter the field widget form element.
-      $context = array(
-        'form' => $form,
-        'field' => $field,
-        'instance' => $instance,
-        'langcode' => $langcode,
-        'items' => $items,
-        'delta' => $delta,
-      );
-      drupal_alter(array('field_widget_form', 'field_widget_' . $instance['widget']['type'] . '_form'), $element, $form_state, $context);
-    }
-  }
-  return $element;
-}
-
-function _field_group_multiple_get_max_cardinality($cardinalities = array()) {
-  if (empty($cardinalities)) $cardinalities = array(0);
-
-  $min_cardinality = min($cardinalities);
-  $max_cardinality = max($cardinalities);
-
-  if ($min_cardinality != $max_cardinality) {
-    $min_cardinality = FIELD_CARDINALITY_UNLIMITED;
-
-    foreach ($cardinalities as $field_name => $caridinality) {
-      if ($caridinality == FIELD_CARDINALITY_UNLIMITED) {
-        continue;
-      }
-
-      if ($min_cardinality == FIELD_CARDINALITY_UNLIMITED || $min_cardinality > $caridinality) {
-        $min_cardinality = $caridinality;
-      }
-    }
-  }
-  return $min_cardinality;
-}
-
-
-function _is_field_group_multiple($type) {
-  return preg_match('/^' . FIELD_GROUP_MULTIPLE . '/', $type);
-}
-
-function _is_field_widget($widget) {
-  return isset($widget['#entity_type']) && isset($widget['#bundle']) && isset($widget['#field_name']) && isset($widget['#language']) && isset($widget['#type']);
-}
-
-
-function _field_group_multiple_field_ui_group_function($group, $suffix = NULL) {
-  if (_is_field_group_multiple($group->format_type) && !empty($suffix)) {
-    module_load_include("inc", FIELD_GROUP_MULTIPLE, FIELD_GROUP_MULTIPLE . '.field_ui');
-    $function = '_' . $group->format_type . '_' . $suffix;
-    if (function_exists($function)) {
-      return $function($group);
-    }
-  }
-}
-
-function _field_group_multiple_id($group, $mode) {
-  return 'fgm_' . $group->entity_type . '_' . $group->bundle . '_' . $mode . '_' . $group->group_name;
-}
-
-function &_field_group_multiple_get_group_wrapper($id, &$form) {
-  return $form[$id];
-}
 
 function _template_field_group_multiple_suggestions($suggestions_prefix, $group) {
   $theme_hook_suggestions = array();
