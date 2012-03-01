@@ -345,7 +345,12 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       );
 
       $cardinalities = array();
-      foreach ($group->children as $field_name) {
+      foreach ($group->children as $key => $field_name) {
+        if(!isset($form[$field_name])){ 
+          unset($group_element['fields']['#group']->children[$key]);
+          unset($group_element['fields']['#children'][$key]);
+          continue; // when a field is deleted, but the group not updated
+        }
         $langcode = $form[$field_name]['#language'];
         $form_state['field_group_multiple'][$id]['children'][$field_name] = $langcode;
 
