@@ -299,19 +299,6 @@ function field_group_multiple_add_more_js($form, $form_state) {
 }
 
 
-/**
- * Implements hook_field_attach_view_alter().
- */
-function field_group_multiple_field_attach_view_alter(&$element, $context) {
-  $actual_mode = 'default';
-  if (isset($element['#entity_type']) && isset($element['#bundle'])) {
-    $view_mode_settings = field_view_mode_settings($element['#entity_type'], $element['#bundle']);
-    $view_mode = $context['view_mode'];
-    $actual_mode = (!empty($view_mode_settings[$view_mode]['custom_settings']) ? $view_mode : 'default');
-
-  }
-}
-
 
 function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
 
@@ -425,9 +412,9 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
  * Implements hook_field_attach_form().
  */
 function field_group_multiple_field_attach_submit($entity_type, &$entity, $form, &$form_state) {
-
+  
   if (isset($form['#field_group_multiple'])) {
-
+    
     foreach ($form['#field_group_multiple'] as $group_name => $id) {
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
 
@@ -443,6 +430,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
         field_group_multiple_process_field_submit($values, $field_name, $field_data, $form_values);
       }
 
+      $delta = 0;
       for ($i=0; $i < $items_count ; $i++) {
         $is_empty = TRUE;
 
@@ -453,13 +441,15 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
           }
         }
 
-        if (!$is_empty) {
+        if (!$is_empty) {   
+          // ignore empty lines       
           foreach ($values as $field_name => $field_values) {
             $langcode = key($field_values['values']);
             if(!is_null($field_values['values'][$langcode][$i])){
-              $entity->{$field_name}[$langcode][$i] = $field_values['values'][$langcode][$i];
+              $entity->{$field_name}[$langcode][$delta] = $field_values['values'][$langcode][$i];
             }
           }
+          $delta++;
         }
       }
     }
