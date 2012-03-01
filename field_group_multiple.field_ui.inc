@@ -23,10 +23,9 @@ function _field_group_multiple_field_ui_overview_operation($form, &$form_state, 
   if (!isset($form['fields'])) return ;
 
   $map = array();
-  foreach (element_children($form['fields']) as $field_name) {
+  foreach (element_children($form['fields'],TRUE) as $field_name) {
     if (isset($form['fields'][$field_name]['#row_type']) && $form['fields'][$field_name]['#row_type'] == 'field') {
       if (isset($form['fields'][$field_name]['parent_wrapper']['parent']['#value']) && !empty($form['fields'][$field_name]['parent_wrapper']['parent']['#value'])) {
-        //$group = $form['fields'][$key]['parent_wrapper']['parent']['#value'];
         $map[$field_name] = $form['fields'][$field_name]['parent_wrapper']['parent']['#value'];
       }
     }
@@ -40,8 +39,13 @@ function _field_group_multiple_field_ui_overview_operation($form, &$form_state, 
           $group = new stdClass();
           $group->group_name = $field_name;
           $group->format_type = $data['format']['type'];
-          $group->children = array_keys($map, $field_name);
 
+          $unsorted = array_keys($map, $field_name);          
+          $sorted = array();
+          foreach($unsorted as $unsorted_field){            
+            $sorted[$unsorted_field] = array('#weight' => $form_state['values']['fields'][$unsorted_field]['weight']);
+          }
+          $group->children = element_children($sorted, TRUE); 
           $function($form, $form_state, $group);
         }
       }
