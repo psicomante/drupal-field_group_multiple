@@ -410,13 +410,14 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
 
     foreach ($form['#field_group_multiple'] as $group_name => $id) {
       $group_element =& _field_group_multiple_get_group_wrapper($id, $form);
-
+      
       if (!isset($group_element['#parents'])) $group_element['#parents'] = array($id);
       $parents = array_merge($group_element['#parents'], array("fields" , "items") );
       $form_values = drupal_array_get_nested_value($form_state['values'], $parents);
 
       $items_count = count($form_values);
-
+      $cardinality = $form_state['field_group_multiple'][$id]['cardinality'];
+      
       $values = array();
       foreach ($group_element['fields'][FGM_ORIGINAL] as $field_name => $field_data) {
         $entity->{$field_name} = array();
@@ -434,7 +435,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
           }
         }
 
-        if (!$is_empty) {
+        if (!$is_empty || $cardinality != FIELD_CARDINALITY_UNLIMITED) {
           // ignore empty lines
           foreach ($values as $field_name => $field_values) {
             if($field_values['empty'][$i]) continue; // Ignore empty values
@@ -468,7 +469,7 @@ function field_group_multiple_process_field_submit(&$values, $field_name, $langc
 
 function field_group_multiple_process_field_default_submit(&$values, $field_name, $langcode, $field_info, $form_values){
 
-  $function = $field_info['module'] . '_field_is_empty';
+  //$function = $field_info['module'] . '_field_is_empty';
   //$columns = array_keys($info['columns']);
   $values[$field_name] = array();
 
@@ -477,20 +478,24 @@ function field_group_multiple_process_field_default_submit(&$values, $field_name
 
       if (isset($value[$field_name]['0'])) {
         // composite value
-        $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
+        $values[$field_name]['empty'][$delta] = field_group_multiple_field_item_is_empty($field_info, $value[$field_name]['0']);
         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name][0];
       }
       else{
         // single value
         //$value_key = array_pop($columns);
-        $values[$field_name]['empty'][$delta] = $function($value[$field_name], $field_info);
+        $values[$field_name]['empty'][$delta] = field_group_multiple_field_item_is_empty($field_info, $value[$field_name]);
         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
       }
     }
   }
 }
 
-
+function field_group_multiple_field_item_is_empty($field_info, $value){
+  if(empty($value)) return TRUE;
+  $function = $field_info['module'] . '_field_is_empty';
+  return $function($value, $field_info);
+}
 
 function _field_group_multiple_build_transposed_widget_items($group_id, $entity_type, $entity, &$form, &$form_state, $cardinality) {
   $group_element =& _field_group_multiple_get_group_wrapper($group_id, $form);
@@ -570,7 +575,7 @@ function _field_group_multiple_build_transposed_widget_items($group_id, $entity_
       }
       else {
         $field_items[$delta] = $fields[$field_name]['default'];
-      }
+      }      
 
       // TODO correct language code !!!
       $widget = _field_group_multiple_handle_field_widget($group_id, $field_config['field'], $field_config['instance'], 'und', $field_items, $delta, $form, $form_state);
