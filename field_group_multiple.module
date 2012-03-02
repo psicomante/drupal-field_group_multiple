@@ -172,7 +172,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     $fields = array();
     $max_delta = 0;
     $deltas = array();
-
+    
     foreach ($group->children as $field_name) {
       if(!isset($element[$field_name])) {
         $field_not_in_elements[] = $field_name;
@@ -180,12 +180,11 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
 
       $fields[$field_name] = $element[$field_name];
-
       $entity_type = $fields[$field_name]['#entity_type'];
       $langcode = $fields[$field_name]['#language'];
 
-      $object = $fields[$field_name]['#object'];
-      if(isset($object->in_preview) && $object->in_preview){
+      $object = $fields[$field_name]['#object'];      
+      if(isset($object->form_id) && isset($object->op)){        
         // workaround for preview
         $form_group_id = _field_group_multiple_id($group, 'form');
 
@@ -213,7 +212,6 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
 
       unset($element[$field_name]);
-
     }
 
     foreach ($fields as $field_name => $field_element) {
@@ -982,7 +980,7 @@ function theme_field_group_multiple_table_form($variables) {
 
 function template_preprocess_field_group_multiple_container(&$variables) {
   drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
-
+  
   $group = $variables['group'];
   $fields = $variables['fields'];
   $items = $variables['items'];
@@ -998,12 +996,14 @@ function template_preprocess_field_group_multiple_container(&$variables) {
   $entries = array();
   foreach (element_children($items,TRUE) as $delta) {
     $entry = array();
-    foreach (element_children($items[$delta], TRUE) as $field_name) {
+    $container_row = $items[$delta];    
+    foreach (element_children($container_row, TRUE) as $field_name) {
       $entry[$field_name] = $fields[$field_name];
       $entry[$field_name]['#items'][0] = $entry[$field_name][0] = $items[$delta][$field_name];
     }
+    $entries[$delta] = $entry;
   }
-
+  
   $variables['entries'] = $entries;
   if (empty($entries)) {
     $variables['is_empty'] = true;
