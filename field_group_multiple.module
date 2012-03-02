@@ -735,6 +735,7 @@ function _field_group_multiple_retrieve_original_field_item_deltas($field_name, 
   $table = 'field_data_' . $field_name;
   list($entity_id, $entity_vid, $entity_bundle) = entity_extract_ids($entity_type, $entity);
 
+  // TODO check if it is a revision, then the table is wrong!
   if(empty($entity_vid)){
     // revision could be disabled, so copy value from id
     $entity_vid = $entity_id;
