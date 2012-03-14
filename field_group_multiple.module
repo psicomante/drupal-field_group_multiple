@@ -181,8 +181,12 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
 
       $fields[$field_name] = $element[$field_name];
       $entity_type = $fields[$field_name]['#entity_type'];
-      $langcode = $fields[$field_name]['#language'];
-
+      $langcode = 'und';
+      
+      if(isset($fields[$field_name]['#language'])){
+        $langcode = $fields[$field_name]['#language'];
+      }
+      
       $object = $fields[$field_name]['#object'];      
       if(isset($object->form_id) && isset($object->op)){        
         // workaround for preview
