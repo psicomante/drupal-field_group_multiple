@@ -183,6 +183,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       $entity_type = $fields[$field_name]['#entity_type'];
       $langcode = 'und';
       
+      // fix language notice [#1448342]
       if(isset($fields[$field_name]['#language'])){
         $langcode = $fields[$field_name]['#language'];
       }
