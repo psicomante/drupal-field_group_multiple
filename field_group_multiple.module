@@ -183,7 +183,6 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       $entity_type = $fields[$field_name]['#entity_type'];
       $langcode = 'und';
       
-      // fix language notice [#1448342]
       if(isset($fields[$field_name]['#language'])){
         $langcode = $fields[$field_name]['#language'];
       }
@@ -374,7 +373,11 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
         $group_element['fields'][FGM_ORIGINAL][$field_name] = $form[$field_name];
         $group_element['fields'][FGM_FIELDS][$field_name] = $field_state;
 
-        $form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
+        // Issue #1448342 of locale module which demands the value of $form[$field_name]['#language']
+        $form[$field_name] = array('#language' => $form[$field_name]['#language']);
+        
+        //$form[$field_name] = array(); // reset field, not unset, because the field_group_pre_render works only if child elements exists
+        
       }
 
       $cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
