@@ -138,9 +138,20 @@ function theme_field_group_multiple_table_form($variables) {
   $group = $element['#group'];
   $id = $element['#id'];
 
+  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : null;
+  if ($titles) {
+    $row_titles = array_map('check_plain',explode(',', $titles));
+    if ($row_titles[0] == '-none-') {
+      $row_titles[0] = '';
+    }
+  }
 
   $header = array();
   $rows = array();
+
+  if ($titles) {
+    $header[] = '<div class="th-title">' . $row_titles[0] . '</div>';
+  }
 
   foreach (element_children($original_fields, TRUE) as $field_name) {
     $container = $original_fields[$field_name];
@@ -161,6 +172,15 @@ function theme_field_group_multiple_table_form($variables) {
   foreach (element_children($items, TRUE) as $delta) {
     $field_data = $items[$delta];
     $row = array();
+
+    if ($titles) {
+      $row_title = '';
+      if (($delta + 1) < count($row_titles)) {
+        $row_title = $row_titles[$delta + 1];
+      }
+      $row[] = array("data" => $row_title, "class" => "");
+    }
+
     foreach (element_children($field_data, TRUE) as $field_name) {
       $data = $field_data[$field_name];
       $row[] = array("data" => drupal_render($data), "class" => "");
@@ -271,6 +291,19 @@ function template_preprocess_field_group_multiple_table(&$variables) {
   $header = array();
   $rows = array();
 
+  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : null;
+  if ($titles) {
+    $row_titles = array_map('check_plain',explode(',', $titles));
+    if ($row_titles[0] == '-none-') {
+      $row_titles[0] = '';
+    }
+  }
+
+  if ($titles) {
+    $header[] = $row_titles[0];
+  }
+
+
   $id = $group->group_name;
   foreach (element_children($fields,TRUE) as $field_name) {
     $header[] = t($fields[$field_name]['#title']);
@@ -279,6 +312,15 @@ function template_preprocess_field_group_multiple_table(&$variables) {
   foreach (element_children($items,TRUE) as $delta) {
     $row_values = $items[$delta];
     $row = array();
+
+    if ($titles) {
+      $row_title = '';
+      if (($delta + 1) < count($row_titles)) {
+        $row_title = $row_titles[$delta + 1];
+      }
+      $row[] = array("data" => $row_title, "class" => "");
+    }
+
     foreach (element_children($row_values,TRUE) as $field_name) {
       $data = $row_values[$field_name];
       $row[] = array("data" => drupal_render($data), "class" => "");

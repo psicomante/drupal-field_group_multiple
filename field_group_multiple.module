@@ -75,7 +75,7 @@ function field_group_multiple_field_group_formatter_info() {
       'label' => t('Multiple fields table'),
       'description' => t('This field group type renders the items of multiple fields in the group as rows of the table.'),
       'format_types' => array('open', 'collapsible', 'collapsed'),
-      'instance_settings' => $instance_settings,
+      'instance_settings' => $instance_settings + array('row_titles' => ''),
       'default_formatter' => 'open',
   ),
     'field_group_multiple_label_value' => array(
