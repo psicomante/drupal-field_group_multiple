@@ -20,8 +20,8 @@ function theme_field_group_multiple_container_form($variables) {
       'class' => array(
         'field-group-multiple',
         'field-group-multiple-container',
-  ),
-  ),
+      ),
+    ),
   );
 
 
@@ -34,9 +34,9 @@ function theme_field_group_multiple_container_form($variables) {
           'multiple-inline-element',
           'multiple-item-' . drupal_html_class($delta),
           'clearfix',
-    $delta % 2 == 0 ? 'even' : 'odd',
-    ),
-    ),
+          $delta % 2 == 0 ? 'even' : 'odd',
+        ),
+      ),
       '#weight' => $delta,
     );
 
