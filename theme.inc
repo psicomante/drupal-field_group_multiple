@@ -251,7 +251,9 @@ function template_preprocess_field_group_multiple_label_value(&$variables) {
   $items = $variables['items'];
 
   $field_name_label = $group->format_settings['instance_settings']['label_value_field'];
-  $field_name_value = array_shift(array_diff($group->children, array($field_name_label)));
+  $arr_label = array($field_name_label);
+  $diff = array_diff($group->children, $arr_label);
+  $field_name_value = array_shift($diff);
 
   $tmp_entry = $fields[$field_name_value];
   unset($tmp_entry['#items']);
