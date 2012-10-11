@@ -20,8 +20,8 @@ function theme_field_group_multiple_container_form($variables) {
       'class' => array(
         'field-group-multiple',
         'field-group-multiple-container',
-  ),
-  ),
+       ),
+    ),
   );
 
 
@@ -34,9 +34,9 @@ function theme_field_group_multiple_container_form($variables) {
           'multiple-inline-element',
           'multiple-item-' . drupal_html_class($delta),
           'clearfix',
-    $delta % 2 == 0 ? 'even' : 'odd',
-    ),
-    ),
+          $delta % 2 == 0 ? 'even' : 'odd',
+        ),
+      ),
       '#weight' => $delta,
     );
 
@@ -50,8 +50,8 @@ function theme_field_group_multiple_container_form($variables) {
           'class' => array(
             'multiple-element',
             'multiple-' . drupal_html_class($field_name),
-      ),
-      ),
+          ),
+        ),
         '#weight' => $order,
         'data' => $data,
       );
@@ -88,7 +88,9 @@ function theme_field_group_multiple_label_value_form($variables) {
 
 
   $label_field = $group->format_settings['instance_settings']['label_value_field'];
-  $value_field = array_shift(array_diff($group->children, array($label_field)));
+  $arr_label = array($label_field);
+  $diff = array_diff($group->children, $arr_label);
+  $value_field = array_shift($diff);
 
   $_header = array(
     'label' => array('t' => 'Label', 'd' => 'Label for values', 'f' => $label_field),

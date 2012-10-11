@@ -323,13 +323,13 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $form[$group->group_name] = array();
 
       $group_field_parents = array(FIELD_GROUP_MULTIPLE, $id);
+      
       $form['#field_group_multiple'][$group->group_name] = $id;
       $form_state['field_group_multiple'][$id]['children'] = array();
 
       if (!isset($form['#parents'])) {
         $form_state['field_group_multiple'][$id]['parents'] = array();
-      }
-      else {
+      } else {
         $form_state['field_group_multiple'][$id]['parents'] = $form['#parents'];
       }
 
@@ -364,7 +364,8 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
           unset($group_element['fields']['#children'][$key]);
           continue; // when a field is deleted, but the group not updated
         }
-        $langcode = $form[$field_name]['#language'];
+        
+        $langcode = field_language($entity_type, $entity, $field_name); //$form[$field_name]['#language'];
         $form_state['field_group_multiple'][$id]['children'][$field_name] = $langcode;
 
 
@@ -724,6 +725,10 @@ function _field_group_multiple_field_widget_form_base_element($group_id, $field,
   return $element;
 }
 
+
+
+
+
 function _field_group_multiple_field_widget_form_alter(&$element, $field, $instance, $langcode, $items, $delta, $form, $form_state){
   if ($element) {
     // Allow modules to alter the field widget form element.
@@ -807,7 +812,10 @@ function _field_group_multiple_id($group, $mode = 'form') {
   return 'fgm_' . $group->entity_type . '_' . $group->bundle . '_' . $mode . '_' . $group->group_name;
 }
 
+
+
 function &_field_group_multiple_get_group_wrapper($id, &$form) {
+  // TODO identify parent group/field
   return $form[$id];
 }
 
