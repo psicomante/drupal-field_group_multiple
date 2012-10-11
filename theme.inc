@@ -8,12 +8,11 @@ function theme_field_group_multiple_container_form($variables) {
   drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
 
   $element = $variables['elements'];
-
-  $original_fields = $element[FGM_ORIGINAL];
-  $id = $element['#id'];
+  
   $items = $element['items'];
   $group = $element['#group'];
-
+  $id = $group->identifier;
+  
   $entries = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -78,11 +77,10 @@ function theme_field_group_multiple_label_value_form($variables) {
 
   $element = $variables['elements'];
 
-  $original_fields = $element[FGM_ORIGINAL];
-  $id = $element['#id'];
   $items = $element['items'];
   $group = $element['#group'];
-
+  $id = $group->identifier;
+  
   $header = array();
   $rows = array();
 
@@ -135,10 +133,9 @@ function theme_field_group_multiple_table_form($variables) {
   drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
   $element = $variables['elements'];
 
-  $original_fields = $element[FGM_ORIGINAL];
   $items = $element['items'];
-  $group = $element['#group'];
-  $id = $element['#id'];
+  $group = $element['#group'];  
+  $id = $group->identifier;  
 
   $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : null;
   if ($titles) {
@@ -155,16 +152,13 @@ function theme_field_group_multiple_table_form($variables) {
     $header[] = '<div class="th-title">' . $row_titles[0] . '</div>';
   }
 
-  foreach (element_children($original_fields, TRUE) as $field_name) {
-    $container = $original_fields[$field_name];
-    $language = $container['#language'];
-    $field_data = $container[$language];
+  foreach ($group->fields as $field_name => $field_state) {
 
-    $field_title = $field_data['#title'];
-    $field_description = $field_data['#description'];
+    $field_title = check_plain($field_state['state']['instance']['label']);
+    $field_description = check_plain($field_state['state']['instance']['description']);
 
     $header_entry = '<div class="th-title-label">' . t($field_title) . '</div>';
-    if (!empty($field_data['#description'])) {
+    if (!empty($field_description)) {
       $header_entry .= '<div class="th-title-description">' . t($field_description) . '</div>';
     }
 
