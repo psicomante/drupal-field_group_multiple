@@ -382,6 +382,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
           '#suffix' => '</div>',
           '#group_name' => $group->group_name,
           '#tree' => TRUE,
+          '#weight' => $group->weight
       );
       
       // attach at the top of the form
@@ -409,7 +410,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
             'callback' => 'field_group_multiple_add_more_js',
             'wrapper' => $wrapper_id,
             'effect' => 'fade',
-        ),
+          ),
         );
       }
     }
