@@ -141,7 +141,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     if (empty($group->children)) return; // do nothing if no fields are grouped
 
     foreach ($group->children as $field_name) {
-      if(isset($element[$field_name])) unset($element[$field_name]);
+      if (isset($element[$field_name])) unset($element[$field_name]);
     }
 
     $element[$id] = $form[$id];
@@ -158,7 +158,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
     }
 
-    if(!isset($element['#type'])){
+    if (!isset($element['#type'])) {
       $element['#type'] = 'markup';
     }
 
@@ -176,7 +176,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     $deltas = array();
 
     foreach ($group->children as $field_name) {
-      if(!isset($element[$field_name])) {
+      if (!isset($element[$field_name])) {
         $field_not_in_elements[] = $field_name;
         continue;
       }
@@ -187,7 +187,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       
       $langcode = field_language($entity_type, $object, $field_name);
 
-      if(isset($object->form_id) && isset($object->op)){
+      if (isset($object->form_id) && isset($object->op)) {
         // workaround for preview
         $form_group_id = _field_group_multiple_id($group, 'form');
 
@@ -195,8 +195,8 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
           $values = array();
           field_group_multiple_process_field_submit($values, $field_name, $langcode, $object->{$form_group_id}['fields']['items']);
           $deltas[$field_name] = array();
-          foreach($values[$field_name]['empty'] as $delta => $is_empty){
-            if(!$is_empty){
+          foreach ($values[$field_name]['empty'] as $delta => $is_empty) {
+            if (!$is_empty) {
               $deltas[$field_name][$delta] = $delta;
             }
           }
@@ -207,10 +207,10 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
 
       $element_max_delta = 0;
-      if(!empty($deltas[$field_name])){
+      if (!empty($deltas[$field_name])) {
         $element_max_delta = max($deltas[$field_name]);
       }
-      if($element_max_delta > $max_delta){
+      if ($element_max_delta > $max_delta) {
         $max_delta = $element_max_delta;
       }
 
@@ -222,31 +222,32 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       $count = 0;
 
       // Initialize
-      for($i=0; $i <= $max_delta; $i++) {
-        $array_transposed[$i][$field_name] = array('#markup'=>'','#is_empty' => TRUE);
-        if(isset($field_element['#weight'])){
+      for ($i=0; $i <= $max_delta; $i++) {
+        $array_transposed[$i][$field_name] = array('#markup' => '', '#is_empty' => TRUE);
+        if (isset($field_element['#weight'])) {
           $array_transposed[$i][$field_name]['#weight'] = $field_element['#weight'];
         }
       }
 
-      $element_children_keys = element_children($field_element,TRUE);
+      $element_children_keys = element_children($field_element, TRUE);
 
-      foreach($deltas[$field_name] as $id => $value){
+      foreach ($deltas[$field_name] as $id => $value) {
         $key = array_shift($element_children_keys);
         // fix index bug if field is empty or no set
-        if(isset($field_element[$key])){
+        if (isset($field_element[$key])) {
           $array_transposed[$id][$field_name] = $field_element[$key];
-        }else{
+        } 
+        else {
           $array_transposed[$id][$field_name] = "";
         }
-        if(isset($field_element['#weight'])){
+        if (isset($field_element['#weight'])) {
           $array_transposed[$id][$field_name]['#weight'] = $field_element['#weight'];
         }
       }
     }
 
     if (!empty($field_not_in_elements)) {
-      watchdog('field_group_multiple', 'Field(s) %fields are not present in pass-through variable element from field_group_pre_render.', array('%fields' => implode(", ",$field_not_in_elements)), WATCHDOG_ERROR);
+      watchdog('field_group_multiple', 'Field(s) %fields are not present in pass-through variable element from field_group_pre_render.', array('%fields' => implode(', ', $field_not_in_elements)), WATCHDOG_ERROR);
     }
 
     if (!empty($array_transposed)) {
@@ -267,7 +268,8 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
         '#group' => $group,
         '#fields' => $fields,
       );
-    } else {
+    } 
+    else {
       // drupal_set_message('Multiple group ' . $group->group_name . ' of ' . $group->format_type . ' type is empty','error');
     }
   }
@@ -328,7 +330,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $group->fields = array();
       $cardinalities = array();
       foreach ($group->children as $key => $field_name) {
-        if(!isset($form[$field_name])){
+        if (!isset($form[$field_name])) {
           continue; // when a field is deleted, but the group not updated
         }
 
@@ -621,7 +623,7 @@ function field_group_multiple_field_attach_submit($entity_type, &$entity, $form,
   }
 }
 
-function field_group_multiple_process_field_submit(&$values, $field_name, $langcode = 'und', $form_values = array()){
+function field_group_multiple_process_field_submit(&$values, $field_name, $langcode = 'und', $form_values = array()) {
   // mark empty fields
   $field_info = field_info_field($field_name);
   $module = $field_info['module'];
@@ -666,7 +668,7 @@ function field_group_multiple_field_item_is_empty($field_info, $value) {
 }
 
 
-function _field_group_multiple_get_field_config($entity_type, $entity, &$form, &$form_state){
+function _field_group_multiple_get_field_config($entity_type, $entity, &$form, &$form_state) {
   
 }
 
