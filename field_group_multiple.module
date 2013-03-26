@@ -238,7 +238,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
           $array_transposed[$id][$field_name] = $field_element[$key];
         } 
         else {
-          $array_transposed[$id][$field_name] = "";
+          $array_transposed[$id][$field_name] = '';
         }
         if (isset($field_element['#weight'])) {
           $array_transposed[$id][$field_name]['#weight'] = $field_element['#weight'];

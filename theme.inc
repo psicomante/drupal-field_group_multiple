@@ -9,7 +9,7 @@
  * TODO implement drag & drop for order and remove item row
  */
 function theme_field_group_multiple_container_form($variables) {
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $element = $variables['elements'];
   
@@ -77,7 +77,7 @@ function theme_field_group_multiple_container_form($variables) {
  * TODO implement drag & drop for order and remove item row
  */
 function theme_field_group_multiple_label_value_form($variables) {
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $element = $variables['elements'];
 
@@ -111,9 +111,9 @@ function theme_field_group_multiple_label_value_form($variables) {
     $row = array();
     foreach ($_header as $type => $_data) {
       $data = $field_data[$_data['f']];
-      $row[] = array("data" => drupal_render($data), "class" => "");
+      $row[] = array('data' => drupal_render($data), 'class' => '');
     }
-    $rows[] = array("data" => $row, "class" => array("row-delta-" . $delta));
+    $rows[] = array('data' => $row, 'class' => array('row-delta-' . $delta));
   }
 
   $wrapper_id = drupal_html_id($id . '-add-more-wrapper');
@@ -133,7 +133,7 @@ function theme_field_group_multiple_label_value_form($variables) {
  */
 function theme_field_group_multiple_table_form($variables) {
 
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
   $element = $variables['elements'];
 
   $items = $element['items'];
@@ -177,14 +177,14 @@ function theme_field_group_multiple_table_form($variables) {
       if (($delta + 1) < count($row_titles)) {
         $row_title = $row_titles[$delta + 1];
       }
-      $row[] = array("data" => $row_title, "class" => "");
+      $row[] = array('data' => $row_title, 'class' => '');
     }
 
     foreach (element_children($field_data, TRUE) as $field_name) {
       $data = $field_data[$field_name];
-      $row[] = array("data" => drupal_render($data), "class" => "");
+      $row[] = array('data' => drupal_render($data), 'class' => '');
     }
-    $rows[] = array("data" => $row, "class" => array("row-delta-" . $delta));
+    $rows[] = array('data' => $row, 'class' => array('row-delta-' . $delta));
   }
 
 
@@ -202,7 +202,7 @@ function theme_field_group_multiple_table_form($variables) {
 
 
 function template_preprocess_field_group_multiple_container(&$variables) {
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $group = $variables['group'];
   $fields = $variables['fields'];
@@ -237,13 +237,13 @@ function template_preprocess_field_group_multiple_container(&$variables) {
 
   if (empty($variables['theme_hook_suggestions'])) $variables['theme_hook_suggestions'] = array();
 
-  $suggestions_prefix = "field_group_multiple_container";
+  $suggestions_prefix = 'field_group_multiple_container';
   $variables['theme_hook_suggestions'] = _template_field_group_multiple_suggestions($suggestions_prefix, $group);
 }
 
 
 function template_preprocess_field_group_multiple_label_value(&$variables) {
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $group = $variables['group'];
   $fields = $variables['fields'];
@@ -277,13 +277,13 @@ function template_preprocess_field_group_multiple_label_value(&$variables) {
     $variables['is_empty'] = FALSE;
   }
 
-  $suggestions_prefix = "field_group_multiple_label_value";
+  $suggestions_prefix = 'field_group_multiple_label_value';
   $variables['theme_hook_suggestions'] = _template_field_group_multiple_suggestions($suggestions_prefix, $group);
 }
 
 
 function template_preprocess_field_group_multiple_table(&$variables) {
-  drupal_add_css(drupal_get_path("module", "field_group_multiple") . "/field_group_multiple.css");
+  drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $group = $variables['group'];
   $fields = $variables['fields'];
@@ -319,20 +319,20 @@ function template_preprocess_field_group_multiple_table(&$variables) {
       if (($delta + 1) < count($row_titles)) {
         $row_title = $row_titles[$delta + 1];
       }
-      $row[] = array("data" => $row_title, "class" => "");
+      $row[] = array('data' => $row_title, 'class' => '');
     }
 
     foreach (element_children($row_values, TRUE) as $field_name) {
       $data = $row_values[$field_name];
-      $row[] = array("data" => drupal_render($data), "class" => "");
+      $row[] = array('data' => drupal_render($data), 'class' => '');
     }
-    $rows[] = array("data" => $row, "class" => array("row-delta-" . $delta));
+    $rows[] = array('data' => $row, 'class' => array('row-delta-' . $delta));
   }
 
   $table_id = drupal_html_id($id . '_values');
   $variables['table'] = theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => $table_id, 'class' => array('field-group-multiple-table'))));
 
-  $suggestions_prefix = "field_group_multiple_table";
+  $suggestions_prefix = 'field_group_multiple_table';
   $variables['theme_hook_suggestions'] = _template_field_group_multiple_suggestions($suggestions_prefix, $group);
 }
 
@@ -340,10 +340,10 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 
 function _template_field_group_multiple_suggestions($suggestions_prefix, $group) {
   $theme_hook_suggestions = array();
-  $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->group_name;
-  $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->entity_type;
-  $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->entity_type . "__" . $group->group_name;
-  $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->entity_type . "__" . $group->bundle;
-  $theme_hook_suggestions[] = $suggestions_prefix . "__" . $group->entity_type . "__" . $group->bundle . "__" . $group->group_name;
+  $theme_hook_suggestions[] = $suggestions_prefix . '__' . $group->group_name;
+  $theme_hook_suggestions[] = $suggestions_prefix . '__' . $group->entity_type;
+  $theme_hook_suggestions[] = $suggestions_prefix . '__' . $group->entity_type . '__' . $group->group_name;
+  $theme_hook_suggestions[] = $suggestions_prefix . '__' . $group->entity_type . '__' . $group->bundle;
+  $theme_hook_suggestions[] = $suggestions_prefix . '__' . $group->entity_type . '__' . $group->bundle . '__' . $group->group_name;
   return $theme_hook_suggestions;
 }
