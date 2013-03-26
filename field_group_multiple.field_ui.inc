@@ -23,7 +23,7 @@ function _field_group_multiple_field_ui_overview_operation($form, &$form_state, 
   if (!isset($form['fields'])) return;
 
   $map = array();
-  foreach (element_children($form['fields'],TRUE) as $field_name) {
+  foreach (element_children($form['fields'], TRUE) as $field_name) {
     if (isset($form['fields'][$field_name]['#row_type']) && $form['fields'][$field_name]['#row_type'] == 'field') {
       if (isset($form['fields'][$field_name]['parent_wrapper']['parent']['#value']) && !empty($form['fields'][$field_name]['parent_wrapper']['parent']['#value'])) {
         $map[$field_name] = $form['fields'][$field_name]['parent_wrapper']['parent']['#value'];

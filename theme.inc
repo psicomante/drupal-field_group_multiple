@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @file
+ *
+ * Theme functions for field_group_multiple
+ */
 
 /**
  * TODO implement drag & drop for order and remove item row
@@ -136,9 +140,9 @@ function theme_field_group_multiple_table_form($variables) {
   $group = $element['#group'];  
   $id = $group->identifier;  
 
-  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : null;
+  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : NULL;
   if ($titles) {
-    $row_titles = array_map('check_plain',explode(',', $titles));
+    $row_titles = array_map('check_plain', explode(',', $titles));
     if ($row_titles[0] == '-none-') {
       $row_titles[0] = '';
     }
@@ -207,7 +211,7 @@ function template_preprocess_field_group_multiple_container(&$variables) {
   // unset other children
   foreach (element_children($fields, TRUE) as $field_name) {
     unset($fields[$field_name]['#items']);
-    foreach (element_children($fields[$field_name],TRUE) as $nr) {
+    foreach (element_children($fields[$field_name], TRUE) as $nr) {
       unset($fields[$field_name][$nr]);
     }
   }
@@ -290,7 +294,7 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 
   $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : NULL;
   if ($titles) {
-    $row_titles = array_map('check_plain',explode(',', $titles));
+    $row_titles = array_map('check_plain', explode(',', $titles));
     if ($row_titles[0] == '-none-') {
       $row_titles[0] = '';
     }
@@ -302,11 +306,11 @@ function template_preprocess_field_group_multiple_table(&$variables) {
 
 
   $id = $group->group_name;
-  foreach (element_children($fields,TRUE) as $field_name) {
+  foreach (element_children($fields, TRUE) as $field_name) {
     $header[] = t($fields[$field_name]['#title']);
   }
 
-  foreach (element_children($items,TRUE) as $delta) {
+  foreach (element_children($items, TRUE) as $delta) {
     $row_values = $items[$delta];
     $row = array();
 
@@ -318,7 +322,7 @@ function template_preprocess_field_group_multiple_table(&$variables) {
       $row[] = array("data" => $row_title, "class" => "");
     }
 
-    foreach (element_children($row_values,TRUE) as $field_name) {
+    foreach (element_children($row_values, TRUE) as $field_name) {
       $data = $row_values[$field_name];
       $row[] = array("data" => drupal_render($data), "class" => "");
     }

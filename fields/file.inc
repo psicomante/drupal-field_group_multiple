@@ -1,15 +1,9 @@
 <?php
 /**
+ * @file
+ *
  * Override for file_field_widget_form
  *
- * @param unknown_type $form
- * @param unknown_type $form_state
- * @param unknown_type $field
- * @param unknown_type $instance
- * @param unknown_type $langcode
- * @param unknown_type $items
- * @param unknown_type $delta
- * @param unknown_type $element
  */
 function field_group_multiple_file_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
@@ -120,7 +114,7 @@ function field_group_multiple_file_field_widget_process($element, &$form_state, 
   $element = file_field_widget_process($element, $form_state, $form);
 
   // hack for cardinality check
-  foreach(element_children($element) as $key){
+  foreach (element_children($element) as $key) {
     if (isset($backup_ajax[$key]['#ajax'])) {
       $element[$key]['#ajax']['path'] = $backup_ajax[$key]['#ajax']['path'];
       $element[$key]['#ajax']['wrapper'] = $backup_ajax[$key]['#ajax']['wrapper'];
@@ -148,8 +142,8 @@ function field_group_multiple_process_field_file_submit(&$values, $field_name, $
 
         $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name]['0'];
-        if($values[$field_name]['empty'][$delta]){
-          $values[$field_name]['values'][$langcode][$delta] = null;
+        if ($values[$field_name]['empty'][$delta]) {
+          $values[$field_name]['values'][$langcode][$delta] = NULL;
         }
 
       }
