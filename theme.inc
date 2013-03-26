@@ -12,7 +12,7 @@ function theme_field_group_multiple_container_form($variables) {
   $items = $element['items'];
   $group = $element['#group'];
   $id = $group->identifier;
-  
+
   $entries = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -24,7 +24,7 @@ function theme_field_group_multiple_container_form($variables) {
   );
 
 
-  foreach (element_children($items,TRUE) as $delta) {
+  foreach (element_children($items, TRUE) as $delta) {
     $field_data = $items[$delta];
     $entry = array(
       '#type' => 'container',
@@ -40,7 +40,7 @@ function theme_field_group_multiple_container_form($variables) {
     );
 
     $order = 0;
-    foreach (element_children($field_data,TRUE) as $field_name) {
+    foreach (element_children($field_data, TRUE) as $field_name) {
       $data = $field_data[$field_name];
 
       $elem = array(
@@ -49,8 +49,8 @@ function theme_field_group_multiple_container_form($variables) {
           'class' => array(
             'multiple-element',
             'multiple-' . drupal_html_class($field_name),
-      ),
-      ),
+          ),
+        ),
         '#weight' => $order,
         'data' => $data,
       );
@@ -205,7 +205,7 @@ function template_preprocess_field_group_multiple_container(&$variables) {
   $items = $variables['items'];
 
   // unset other children
-  foreach (element_children($fields,TRUE) as $field_name) {
+  foreach (element_children($fields, TRUE) as $field_name) {
     unset($fields[$field_name]['#items']);
     foreach (element_children($fields[$field_name],TRUE) as $nr) {
       unset($fields[$field_name][$nr]);
@@ -213,7 +213,7 @@ function template_preprocess_field_group_multiple_container(&$variables) {
   }
 
   $entries = array();
-  foreach (element_children($items,TRUE) as $delta) {
+  foreach (element_children($items, TRUE) as $delta) {
     $entry = array();
     $container_row = $items[$delta];
     foreach (element_children($container_row, TRUE) as $field_name) {
@@ -225,10 +225,10 @@ function template_preprocess_field_group_multiple_container(&$variables) {
 
   $variables['entries'] = $entries;
   if (empty($entries)) {
-    $variables['is_empty'] = true;
+    $variables['is_empty'] = TRUE;
   }
   else {
-    $variables['is_empty'] = false;
+    $variables['is_empty'] = FALSE;
   }
 
   if (empty($variables['theme_hook_suggestions'])) $variables['theme_hook_suggestions'] = array();
@@ -258,7 +258,7 @@ function template_preprocess_field_group_multiple_label_value(&$variables) {
   }
 
   $entries = array();
-  foreach (element_children($items,TRUE) as $delta) {
+  foreach (element_children($items, TRUE) as $delta) {
     $values = $items[$delta];
     $entry = $tmp_entry;
     $entry['#title'] = $values[$field_name_label]['#markup'];
@@ -267,10 +267,10 @@ function template_preprocess_field_group_multiple_label_value(&$variables) {
   }
   $variables['entries'] = $entries;
   if (empty($entries)) {
-    $variables['is_empty'] = true;
+    $variables['is_empty'] = TRUE;
   }
   else {
-    $variables['is_empty'] = false;
+    $variables['is_empty'] = FALSE;
   }
 
   $suggestions_prefix = "field_group_multiple_label_value";
@@ -288,7 +288,7 @@ function template_preprocess_field_group_multiple_table(&$variables) {
   $header = array();
   $rows = array();
 
-  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : null;
+  $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : NULL;
   if ($titles) {
     $row_titles = array_map('check_plain',explode(',', $titles));
     if ($row_titles[0] == '-none-') {

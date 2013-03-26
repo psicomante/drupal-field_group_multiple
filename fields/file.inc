@@ -25,11 +25,10 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
   $field_state = field_form_get_state($element['#field_parents'], $field['field_name'], $langcode, $form_state);
   if (isset($field_state['items'])) {
     $items = $field_state['items'];
-     
   }
 
   // FIELD GROUP MULTIPLE: if delta then map
-  if(isset($items[$delta])){
+  if (isset($items[$delta])) {
     $tmp = $items[$delta];
     $items[0] = $tmp;
   }
@@ -44,7 +43,7 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
   //'#process' => array_merge($element_info['#process'], array('file_field_widget_process')),
     '#process' => array_merge($element_info['#process'], array('field_group_multiple_file_field_widget_process')),  
     '#progress_indicator' => $instance['widget']['settings']['progress_indicator'],
-  // Allows this field to return an array instead of a single value.
+    // Allows this field to return an array instead of a single value.
     '#extended' => TRUE,
   );
 
@@ -106,7 +105,7 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
   return $elements;
 }
 
-function field_group_multiple_file_field_widget_process($element, &$form_state, $form){
+function field_group_multiple_file_field_widget_process($element, &$form_state, $form) {
   $prefix = $element['#prefix'];
   $suffix = $element['#suffix'];
 
@@ -137,7 +136,7 @@ function field_group_multiple_file_field_widget_process($element, &$form_state, 
 }
 
 
-function field_group_multiple_process_field_file_submit(&$values, $field_name, $langcode, $field_info, $form_values){
+function field_group_multiple_process_field_file_submit(&$values, $field_name, $langcode, $field_info, $form_values) {
 
   $function = $field_info['module'] . '_field_is_empty';
 
@@ -154,12 +153,12 @@ function field_group_multiple_process_field_file_submit(&$values, $field_name, $
         }
 
       }
-      //       else{
-      //         // single value
-      //         $value_key = array_pop($columns);
-      //         $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
-      //         $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
-      //       }
+      /* else {
+        // single value
+        $value_key = array_pop($columns);
+        $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
+        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
+      } */
     }
   }
 }
