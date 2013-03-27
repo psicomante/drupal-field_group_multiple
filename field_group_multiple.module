@@ -222,7 +222,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       $count = 0;
 
       // Initialize
-      for ($i=0; $i <= $max_delta; $i++) {
+      for ($i = 0; $i <= $max_delta; $i++) {
         $array_transposed[$i][$field_name] = array('#markup' => '', '#is_empty' => TRUE);
         if (isset($field_element['#weight'])) {
           $array_transposed[$i][$field_name]['#weight'] = $field_element['#weight'];
@@ -496,7 +496,7 @@ function _field_group_multiple_build_transposed_widget_items($group, $entity_typ
   
   // add empty rows
   if (($c_diff = abs($items_count - $field_value_count)) > 0) {
-    for ($i=0; $i < $c_diff; $i++) {
+    for ($i = 0; $i < $c_diff; $i++) {
       $data = array();
       foreach ($field_names as $field_name) {
         $data[$field_name] = NULL;
