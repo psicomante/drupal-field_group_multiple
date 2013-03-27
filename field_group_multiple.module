@@ -45,7 +45,7 @@ function field_group_multiple_theme() {
 }
 
 /**
- * Implements _field_group_formatter_info().
+ * Implements hook_field_group_formatter_info().
  */
 function field_group_multiple_field_group_formatter_info() {
   $instance_settings = array(
@@ -128,18 +128,18 @@ function field_group_multiple_field_group_format_summary($group) {
 /**
  * Implements hook_field_group_pre_render().
  */
-function field_group_multiple_field_group_pre_render(&$element, $group, &$form) {
+function field_group_multiple_field_group_pre_render(&$element, $group, &$form) {  
   if (!_is_field_group_multiple($group->format_type)) {
     return;
   }
-
+  
   $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
   $id = _field_group_multiple_id($group, $view_mode);
 
   if ($view_mode == 'form') {
     // Modifications on formular widgets
     if (empty($group->children)) return; // do nothing if no fields are grouped
-
+    
     foreach ($group->children as $field_name) {
       if (isset($element[$field_name])) unset($element[$field_name]);
     }
@@ -296,20 +296,20 @@ function field_group_multiple_add_more_js($form, $form_state) {
   return $element;
 }
 
-
-
+/**
+ * Implements hook_field_attach_form().
+ */
 function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
-
+    
   $bundle = $form['#bundle'];
   $groups = field_group_info_groups($entity_type, $bundle, 'form');
 
-  if (!empty($groups)) {
-
+  if (!empty($groups)) {    
     foreach ($groups as $group_name => $group) {
       if (!_is_field_group_multiple($group->format_type)) continue;
 
       if (empty($group->children)) continue; // do nothing if no fields are grouped
-
+      
       
       // Generate unique identifier for the group
       $id = _field_group_multiple_id($group, 'form');
@@ -318,13 +318,13 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $group->grouped_fields = array();
       $group->field_parents = array();
       $group->parents = array();
+      
       if (isset($form['#parents'])) {
         $group->parents = $group->field_parents = $form['#parents'];
       } 
       $group->field_parents[] = $group->identifier;
       
       $wrapper_id = $group->identifier . '-add-more-wrapper';
-
 
       // TODO get the parents of the group
       $group->fields = array();
@@ -343,7 +343,6 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
 
         // Reset cardinality to 1
         $field['cardinality'] = 1;
-        
         $field_state['field'] = $field;        
         
         $group->fields[$field_name] = array();
@@ -363,8 +362,6 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $group->cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
       field_group_multiple_form_set_state($group->identifier, $form_state, $group);
 
-      // Reset group
-      $form[$group->group_name] = array();
 
       // Register the group in the form
       if (empty($form['#field_group_multiple'])) {
@@ -386,6 +383,21 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $form[$group->identifier] = $group_template;
       $group_element =& _field_group_multiple_get_group_wrapper($group->identifier, $form);
 
+      if (!empty($group->parent_name)) {
+        $arr_index = array_search($group_name, $form['#groups'][$group->parent_name]->children);
+        $form['#groups'][$group->parent_name]->children[$arr_index] = $group->identifier;
+        $tmp = $form['#group_children'];
+        foreach ($tmp as $child_name => $parent_name) {
+          if ($child_name == $group->group_name) {
+            unset($form['#group_children'][$group->group_name]);
+            $form['#group_children'][$group->identifier] = $parent_name;
+          }
+        }        
+      }
+      
+      // Set placeholder
+      // $form[$group->group_name] = array();      
+      
       $group_element['fields'] = array(
           '#theme' => $group->format_type . '_form',
           '#group_name' => $group->group_name,
@@ -411,6 +423,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
         );
       }
     }
+    
   }
 }
 
