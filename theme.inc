@@ -155,19 +155,24 @@ function theme_field_group_multiple_table_form($variables) {
     $header[] = '<div class="th-title">' . $row_titles[0] . '</div>';
   }
 
+  $weights = array();
   foreach ($group->fields as $field_name => $field_state) {
-
-    $field_title = check_plain($field_state['state']['instance']['label']);
-    $field_description = check_plain($field_state['state']['instance']['description']);
+    $field_instance_state = $field_state['state']['instance'];
+    $field_title = check_plain($field_instance_state['label']);
+    $field_description = check_plain($field_instance_state['description']);
 
     $header_entry = '<div class="th-title-label">' . t($field_title) . '</div>';
     if (!empty($field_description)) {
       $header_entry .= '<div class="th-title-description">' . t($field_description) . '</div>';
     }
-
-    $header[] = '<div class="th-title">' . $header_entry . '</div>';
+    
+    $weight = $field_instance_state['widget']['weight'];
+    $weights[$field_name] = $weight; // Cache weights for rows
+    $header[$weight] = '<div class="th-title">' . $header_entry . '</div>';
   }
 
+  ksort($header);
+  
   foreach (element_children($items, TRUE) as $delta) {
     $field_data = $items[$delta];
     $row = array();
@@ -182,8 +187,10 @@ function theme_field_group_multiple_table_form($variables) {
 
     foreach (element_children($field_data, TRUE) as $field_name) {
       $data = $field_data[$field_name];
-      $row[] = array('data' => drupal_render($data), 'class' => '');
+      $weight = $weights[$field_name];
+      $row[$weight] = array('data' => drupal_render($data), 'class' => '');
     }
+    ksort($row);
     $rows[] = array('data' => $row, 'class' => array('row-delta-' . $delta));
   }
 
