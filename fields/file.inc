@@ -1,10 +1,9 @@
 <?php
 /**
  * @file
- *
  * Override for file_field_widget_form
- *
  */
+
 function field_group_multiple_file_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
   $defaults = array(
@@ -35,14 +34,14 @@ function field_group_multiple_file_field_widget_form(&$form, &$form_state, $fiel
     '#upload_validators' => file_field_widget_upload_validators($field, $instance),
     '#value_callback' => 'file_field_widget_value',
   //'#process' => array_merge($element_info['#process'], array('file_field_widget_process')),
-    '#process' => array_merge($element_info['#process'], array('field_group_multiple_file_field_widget_process')),  
+    '#process' => array_merge($element_info['#process'], array('field_group_multiple_file_field_widget_process')),
     '#progress_indicator' => $instance['widget']['settings']['progress_indicator'],
     // Allows this field to return an array instead of a single value.
     '#extended' => TRUE,
   );
 
   // FIELD GROUP MULTIPLE:
-  if (true || $field['cardinality'] == 1) {
+  if (TRUE || $field['cardinality'] == 1) {
     // Set the default value.
     $element['#default_value'] = !empty($items) ? $items[0] : $defaults;
     //$element['#default_value'] = !empty($items) ? $items[$delta] : $defaults;
@@ -147,12 +146,6 @@ function field_group_multiple_process_field_file_submit(&$values, $field_name, $
         }
 
       }
-      /* else {
-        // single value
-        $value_key = array_pop($columns);
-        $values[$field_name]['empty'][$delta] = $function($value[$field_name], $info);
-        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name];
-      } */
     }
   }
 }

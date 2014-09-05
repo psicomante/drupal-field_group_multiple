@@ -1,6 +1,7 @@
 <?php
 /**
- * @file field_group_multiple.install
+ * @file
+ * field_group_multiple.install
  */
 
 /**

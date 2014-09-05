@@ -1,6 +1,7 @@
 <?php
 /**
- * @file field_group_multiple.field_ui.inc
+ * @file
+ * field_group_multiple.field_ui.inc
  */
 
 function field_group_multiple_field_ui_overview_form_alter(&$form, &$form_state, $display_overview = FALSE) {
@@ -99,7 +100,6 @@ function _field_group_multiple_default_format_settings($group) {
     '#attributes' => array('class' => array('field-group-parent-type')),
   );
 
-
   if (!empty($default_parent_type)) {
     $field_group_types = field_group_formatter_info();
     $mode = $group->mode == 'form' ? 'form' : 'display';
@@ -148,10 +148,10 @@ function _field_group_multiple_default_format_summary($group) {
   $min_cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
   $info = '<em>This value depends on the shortest selected "number of values" of the grouped fields.</em>';
   if ($min_cardinality == FIELD_CARDINALITY_UNLIMITED) {
-    return '<div class="description">' . t('The maximal amount of items that can be added is unlimited.<br/>' . $info , array('!count' => $min_cardinality)) . '</div>';
+    return '<div class="description">' . t('The maximal amount of items that can be added is unlimited.<br/>' . $info, array('!count' => $min_cardinality)) . '</div>';
   }
   else {
-    return '<div class="description">' . t('The maximal amount of items that can be added is !count.<br/>' . $info , array('!count' => $min_cardinality)) . '</div>';
+    return '<div class="description">' . t('The maximal amount of items that can be added is !count.<br/>' . $info, array('!count' => $min_cardinality)) . '</div>';
   }
 
 }

@@ -1,7 +1,6 @@
 <?php
 /**
  * @file
- *
  * Theme functions for field_group_multiple
  */
 
@@ -12,7 +11,7 @@ function theme_field_group_multiple_container_form($variables) {
   drupal_add_css(drupal_get_path('module', 'field_group_multiple') . '/field_group_multiple.css');
 
   $element = $variables['elements'];
-  
+
   $items = $element['items'];
   $group = $element['#group'];
   $id = $group->identifier;
@@ -26,7 +25,6 @@ function theme_field_group_multiple_container_form($variables) {
       ),
     ),
   );
-
 
   foreach (element_children($items, TRUE) as $delta) {
     $field_data = $items[$delta];
@@ -84,10 +82,9 @@ function theme_field_group_multiple_label_value_form($variables) {
   $items = $element['items'];
   $group = $element['#group'];
   $id = $group->identifier;
-  
+
   $header = array();
   $rows = array();
-
 
   $label_field = $group->format_settings['instance_settings']['label_value_field'];
   $diff = array_diff($group->children, array($label_field));
@@ -137,8 +134,8 @@ function theme_field_group_multiple_table_form($variables) {
   $element = $variables['elements'];
 
   $items = $element['items'];
-  $group = $element['#group'];  
-  $id = $group->identifier;  
+  $group = $element['#group'];
+  $id = $group->identifier;
 
   $titles = (isset($group->format_settings['instance_settings']['row_titles'])) ? $group->format_settings['instance_settings']['row_titles'] : NULL;
   if ($titles) {
@@ -165,14 +162,16 @@ function theme_field_group_multiple_table_form($variables) {
     if (!empty($field_description)) {
       $header_entry .= '<div class="th-title-description">' . t($field_description) . '</div>';
     }
-    
+
     $weight = $field_instance_state['widget']['weight'];
-    $weights[$field_name] = $weight; // Cache weights for rows
+
+    $weights[$field_name] = $weight;
+    // Cache weights for rows
     $header[$weight] = '<div class="th-title">' . $header_entry . '</div>';
   }
 
   ksort($header);
-  
+
   foreach (element_children($items, TRUE) as $delta) {
     $field_data = $items[$delta];
     $row = array();
@@ -193,7 +192,6 @@ function theme_field_group_multiple_table_form($variables) {
     ksort($row);
     $rows[] = array('data' => $row, 'class' => array('row-delta-' . $delta));
   }
-
 
   $wrapper_id = drupal_html_id($id . '-add-more-wrapper');
   $table_id = drupal_html_id($id . '_values');
@@ -310,7 +308,6 @@ function template_preprocess_field_group_multiple_table(&$variables) {
   if ($titles) {
     $header[] = $row_titles[0];
   }
-
 
   $id = $group->group_name;
   foreach (element_children($fields, TRUE) as $field_name) {

@@ -1,6 +1,7 @@
 <?php
 /**
- * TODO documantation
+ * @file
+ * TODO documentation
  *
  * - group
  * - items
