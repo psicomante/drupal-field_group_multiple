@@ -136,11 +136,10 @@ function field_group_multiple_process_field_file_submit(&$values, $field_name, $
   foreach ($form_values as $delta => $value) {
     if (isset($value[$field_name])) {
 
-      if (isset($value[$field_name]['0'])) {
+      if (isset($value[$field_name][$langcode]['0'])) {
         // composite value
-
-        $values[$field_name]['empty'][$delta] = $function($value[$field_name]['0'], $field_info);
-        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name]['0'];
+        $values[$field_name]['empty'][$delta] = $function($value[$field_name][$langcode]['0'], $field_info);
+        $values[$field_name]['values'][$langcode][$delta] = $value[$field_name][$langcode]['0'];
         if ($values[$field_name]['empty'][$delta]) {
           $values[$field_name]['values'][$langcode][$delta] = NULL;
         }
