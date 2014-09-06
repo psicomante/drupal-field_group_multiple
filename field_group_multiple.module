@@ -181,7 +181,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     $deltas = array();
 
     foreach ($group->children as $field_name) {
-      if (!isset($element[$field_name]) || $element[$field_name]['#access'] == FALSE) {
+      if (!isset($element[$field_name])) {
         $field_not_in_elements[] = $field_name;
         continue;
       }
@@ -776,8 +776,12 @@ function field_group_multiple_element_validate_wrapper(&$element, &$form_state) 
     $language = $element['#language'];
 
     // fix date field validation problems, for field which take #field_parents in drupal_get_nested_values
-    $form_state['input'][$group_id][$field_name][$language][$delta] = $form_state['input'][$group_id]['fields']['items'][$delta][$field_name][$language];
-    $form_state['values'][$group_id][$field_name][$language][$delta] = $form_state['values'][$group_id]['fields']['items'][$delta][$field_name][$language];
+    if (isset($form_state['input'][$group_id]['fields']['items'][$delta][$field_name][$language])) {
+      $form_state['input'][$group_id][$field_name][$language][$delta] = $form_state['input'][$group_id]['fields']['items'][$delta][$field_name][$language];
+    }
+    if (isset($form_state['values'][$group_id]['fields']['items'][$delta][$field_name][$language])) {
+      $form_state['values'][$group_id][$field_name][$language][$delta] = $form_state['values'][$group_id]['fields']['items'][$delta][$field_name][$language];
+    }
 
     foreach ($callbacks as $callback) {
       $callback($element, $form_state);
