@@ -181,7 +181,7 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
     $deltas = array();
 
     foreach ($group->children as $field_name) {
-      if (!isset($element[$field_name])) {
+      if (!isset($element[$field_name]) || $element[$field_name]['#access'] == FALSE) {
         $field_not_in_elements[] = $field_name;
         continue;
       }
