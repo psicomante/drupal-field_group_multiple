@@ -867,6 +867,9 @@ function _field_group_multiple_retrieve_original_field_item_deltas($field_name, 
     // revision could be disabled, so copy value from id
     $entity_vid = $entity_id;
   }
+  else {
+    $table = 'field_revision_' . $field_name;
+  }
 
   return db_select($table)->fields($table, array('delta'))
     ->condition('entity_type', $entity_type)
