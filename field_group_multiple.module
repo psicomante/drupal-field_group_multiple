@@ -746,6 +746,10 @@ function _field_group_multiple_process_field_widget_form($function, $group, $ent
 
     $subelement = _field_group_multiple_field_widget_form_base_element($group, $field, $entity, $instance, $langcode, $items, $delta, $form, $form_state);
 
+    // Insert delta value into element directly, because some contrib modules
+    // may access element delta directly from element's build array.
+    $subelement['#delta'] = 0;
+
     $field_items = array();
     $field_items[0] = isset($items[$delta]) ? $items[$delta] : array();
 
