@@ -334,35 +334,32 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $group->fields = array();
       $cardinalities = array();
       foreach ($group->children as $key => $field_name) {
-        if (!isset($form[$field_name])) {
-          continue;
-          // when a field is deleted, but the group not updated
+        if (isset($form[$field_name])) {
+          $langcode = field_language($entity_type, $entity, $field_name);
+          $langcode = !empty($langcode) ? $langcode : LANGUAGE_NONE;
+          $field_state = field_form_get_state($form[$field_name][$langcode]['#field_parents'], $field_name, $langcode, $form_state);
+          $field = $field_state['field'];
+          $instance = $field_state['instance'];
+
+          $cardinalities[$field_name] = $field['cardinality'];
+
+          // Reset cardinality to 1
+          $field['cardinality'] = 1;
+          $field_state['field'] = $field;
+
+          $group->fields[$field_name] = array();
+          $group->fields[$field_name]['state'] = $field_state;
+          $group->fields[$field_name]['langcode'] = $langcode;
+
+          // Reposition the field_state
+          field_form_set_state($group->field_parents, $field_name, $langcode, $form_state, $field_state);
+
+          // field_access
+          $form[$field_name]['#field_group_multiple'] = $group_name;
+
+          // Disable original field
+          $form[$field_name]['#access'] = FALSE;
         }
-
-        $langcode = field_language($entity_type, $entity, $field_name);
-        $langcode = !empty($langcode) ? $langcode : LANGUAGE_NONE;
-        $field_state = field_form_get_state($form[$field_name][$langcode]['#field_parents'], $field_name, $langcode, $form_state);
-        $field = $field_state['field'];
-        $instance = $field_state['instance'];
-
-        $cardinalities[$field_name] = $field['cardinality'];
-
-        // Reset cardinality to 1
-        $field['cardinality'] = 1;
-        $field_state['field'] = $field;
-
-        $group->fields[$field_name] = array();
-        $group->fields[$field_name]['state'] = $field_state;
-        $group->fields[$field_name]['langcode'] = $langcode;
-
-        // Reposition the field_state
-        field_form_set_state($group->field_parents, $field_name, $langcode, $form_state, $field_state);
-
-        // field_access
-        $form[$field_name]['#field_group_multiple'] = $group_name;
-
-        // Disable original field
-        $form[$field_name]['#access'] = FALSE;
       }
 
       $group->cardinality = _field_group_multiple_get_max_cardinality($cardinalities);
