@@ -334,7 +334,7 @@ function field_group_multiple_field_attach_form($entity_type, $entity, &$form, &
       $group->fields = array();
       $cardinalities = array();
       foreach ($group->children as $key => $field_name) {
-        if (isset($form[$field_name])) {
+        if (isset($form[$field_name]) && $form[$field_name]['#access'] == TRUE) {
           $langcode = field_language($entity_type, $entity, $field_name);
           $langcode = !empty($langcode) ? $langcode : LANGUAGE_NONE;
           $field_state = field_form_get_state($form[$field_name][$langcode]['#field_parents'], $field_name, $langcode, $form_state);
