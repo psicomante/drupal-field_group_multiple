@@ -251,9 +251,9 @@ function field_group_multiple_field_group_pre_render(&$element, $group, &$form) 
       }
     }
 
-    if (!empty($field_not_in_elements)) {
-      watchdog('field_group_multiple', 'Field(s) %fields are not present in pass-through variable element from field_group_pre_render.', array('%fields' => implode(', ', $field_not_in_elements)), WATCHDOG_ERROR);
-    }
+    // if (!empty($field_not_in_elements)) {
+    //   watchdog('field_group_multiple', 'Field(s) %fields are not present in pass-through variable element from field_group_pre_render.', array('%fields' => implode(', ', $field_not_in_elements)), WATCHDOG_ERROR);
+    // }
 
     if (!empty($array_transposed)) {
 
